@@ -10,7 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#EDEDEF; --panel:#FFFFFF; --ink:#21212C; --ink-soft:#6B6C78; --line:#E1E1E5;
+  --bg:#EDEDEF; --panel:#FFFFFF; --ink:#21212C; --ink-soft:#5E5F6B; --line:#E1E1E5;
   --sidebar:#21212C; --sidebar-ink:#F1F1F3; --sidebar-ink-dim:#9A9AA8;
   --accent:#3B5BDB; --accent-ink:#FFFFFF; --accent-soft:#E8EDFC;
   --ok:#2F8F5B; --ok-soft:#E5F3EA;
@@ -18,6 +18,7 @@
   --risk:#C98A2B; --risk-soft:#FBF1DF;
   --bad:#B33B3B; --bad-soft:#F8E6E6;
   --radius:10px;
+  --ok-ink:#1F6B42; --work-ink:#2E5A85; --risk-ink:#8A5A0E; --bad-ink:#B33B3B;
   --shadow:0 1px 2px rgba(20,20,30,.06), 0 8px 24px rgba(20,20,30,.05);
 }
 [data-theme="dark"], :root:not([data-theme="light"]){}
@@ -30,6 +31,7 @@
     --work:#6E9BC6; --work-soft:#182531;
     --risk:#D9A24E; --risk-soft:#332A16;
     --bad:#D06868; --bad-soft:#331D1D;
+    --ok-ink:#4FAF7C; --work-ink:#6E9BC6; --risk-ink:#D9A24E; --bad-ink:#DB7B7B;
   }
 }
 :root[data-theme="dark"]{
@@ -40,6 +42,7 @@
   --work:#6E9BC6; --work-soft:#182531;
   --risk:#D9A24E; --risk-soft:#332A16;
   --bad:#D06868; --bad-soft:#331D1D;
+    --ok-ink:#4FAF7C; --work-ink:#6E9BC6; --risk-ink:#D9A24E; --bad-ink:#DB7B7B;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;}
@@ -106,10 +109,10 @@ tbody tr:hover{background:var(--accent-soft);}
 .proj-id{color:var(--ink-soft);font-size:11.5px;}
 .num{font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
 .tag{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap;}
-.tag-ok{background:var(--ok-soft);color:var(--ok);}
-.tag-work{background:var(--work-soft);color:var(--work);}
-.tag-risk{background:var(--risk-soft);color:var(--risk);}
-.tag-bad{background:var(--bad-soft);color:var(--bad);}
+.tag-ok{background:var(--ok-soft);color:var(--ok-ink);}
+.tag-work{background:var(--work-soft);color:var(--work-ink);}
+.tag-risk{background:var(--risk-soft);color:var(--risk-ink);}
+.tag-bad{background:var(--bad-soft);color:var(--bad-ink);}
 .tag-neutral{background:var(--bg);color:var(--ink-soft);border:1px solid var(--line);}
 .dim{color:var(--ink-soft);}
 .empty{padding:50px 20px;text-align:center;color:var(--ink-soft);}
@@ -232,6 +235,25 @@ tbody tr:hover{background:var(--accent-soft);}
 .qtab.active{background:var(--accent);color:var(--accent-ink);}
 .ticket-link{font-size:11px;color:var(--accent);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:2px;margin-top:2px;}
 .ticket-link:hover{text-decoration:underline;}
+
+/* ---- accessibility ---- */
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.sidebar button:focus-visible,.sidebar a:focus-visible{outline-color:#fff;}
+.pcard{position:relative;}
+.pcard-open,.row-open{display:block;width:100%;text-align:left;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;cursor:pointer;}
+.pcard-open::after{content:"";position:absolute;inset:0;border-radius:var(--radius);}
+.pcard-open:focus-visible{outline:none;}
+.pcard-open:focus-visible::after{outline:2px solid var(--accent);outline-offset:2px;}
+.pcard .ticket-link{position:relative;z-index:1;}
+.row-open{border-radius:4px;}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer;text-align:left;}
+.modal:focus{outline:none;}
+.modal-close{min-width:32px;min-height:32px;}
+.overlay{overscroll-behavior:contain;}
+.modal-body{overscroll-behavior:contain;}
+button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
+@media (pointer:coarse){ input,select,textarea{font-size:16px !important;} }
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;} }
 </style>
 </head>
 <body>
@@ -244,10 +266,10 @@ tbody tr:hover{background:var(--accent-soft);}
       <div class="brand-sub">Реестр проектов + квалификация · демо</div>
           </div>
     <nav class="nav" id="navList"></nav>
-    <button class="btn-addyear" id="addYearBtn">＋ Добавить год</button>
+    <button class="btn-addyear" id="addYearBtn"><span aria-hidden="true">＋</span> Добавить год</button>
     <div class="sidebar-foot">
       Демо · данные вымышлены и хранятся только в этом браузере.<br>
-      <a href="#" id="resetLink" style="color:inherit;text-decoration:underline;">Сбросить к исходным данным</a>
+      <button type="button" class="linkbtn" id="resetLink">Сбросить к исходным данным</button>
     </div>
     </div>
   </aside>
@@ -260,22 +282,22 @@ tbody tr:hover{background:var(--accent-soft);}
       <div class="pagehead">
         <div>
           <h1 id="modernTitle">Проекты 2026</h1>
-          <p>Клик по строке открывает карточку проекта — там же квалификация после ППМ.</p>
+          <p>Клик по строке открывает карточку проекта — там же квалификация после пост-проектной встречи (ППМ).</p>
         </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn" id="a_cardFields">⚙ Изменить карточку</button>
-          <button class="btn btn-primary" id="a_new">＋ Новый проект</button>
+          <button class="btn" id="a_cardFields"><span aria-hidden="true">⚙</span> Изменить карточку</button>
+          <button class="btn btn-primary" id="a_new"><span aria-hidden="true">＋</span> Новый проект</button>
         </div>
       </div>
 
       <div class="filters">
-        <input type="text" id="a_search" placeholder="Поиск: проект, клиент, проджект…">
+        <input type="text" id="a_search" aria-label="Поиск по проектам" placeholder="Поиск: проект, клиент, проджект…">
         <div class="qtabs" id="a_qtabs"></div>
-        <select id="a_client"><option value="">Клиент: все</option></select>
-        <select id="a_product"><option value="">Продукт: все</option></select>
-        <select id="a_pm"><option value="">Проджект: все</option></select>
-        <select id="a_qual"><option value="">Квалификация: все</option></select>
-        <select id="a_status"><option value="">Статус: все</option><option value="open">Открыт</option><option value="closed">Закрыт</option></select>
+        <select id="a_client" aria-label="Клиент"><option value="">Клиент: все</option></select>
+        <select id="a_product" aria-label="Продукт"><option value="">Продукт: все</option></select>
+        <select id="a_pm" aria-label="Проджект"><option value="">Проджект: все</option></select>
+        <select id="a_qual" aria-label="Квалификация"><option value="">Квалификация: все</option></select>
+        <select id="a_status" aria-label="Статус"><option value="">Статус: все</option><option value="open">Открыт</option><option value="closed">Закрыт</option></select>
         <span class="fcount" id="a_count"></span>
       </div>
 
@@ -290,16 +312,16 @@ tbody tr:hover{background:var(--accent-soft);}
           <h1>Архив 2025</h1>
           <p>Квалификации по 29-балльной модели тогда ещё не было — здесь старая шкала: 5 параметров от 0 до 5 плюс удовлетворённость.</p>
         </div>
-        <button class="btn btn-primary" id="b_new">＋ Добавить архивный проект</button>
+        <button class="btn btn-primary" id="b_new"><span aria-hidden="true">＋</span> Добавить архивный проект</button>
       </div>
 
       <div class="filters">
-        <input type="text" id="b_search" placeholder="Поиск: проект, клиент, проджект…">
+        <input type="text" id="b_search" aria-label="Поиск по проектам" placeholder="Поиск: проект, клиент, проджект…">
         <div class="qtabs" id="b_qtabs"></div>
-        <select id="b_client"><option value="">Клиент: все</option></select>
-        <select id="b_product"><option value="">Продукт: все</option></select>
-        <select id="b_pm"><option value="">Проджект: все</option></select>
-        <select id="b_status"><option value="">Статус: все</option><option value="open">Открыт</option><option value="closed">Закрыт</option></select>
+        <select id="b_client" aria-label="Клиент"><option value="">Клиент: все</option></select>
+        <select id="b_product" aria-label="Продукт"><option value="">Продукт: все</option></select>
+        <select id="b_pm" aria-label="Проджект"><option value="">Проджект: все</option></select>
+        <select id="b_status" aria-label="Статус"><option value="">Статус: все</option><option value="open">Открыт</option><option value="closed">Закрыт</option></select>
         <span class="fcount" id="b_count"></span>
       </div>
 
@@ -324,7 +346,7 @@ tbody tr:hover{background:var(--accent-soft);}
           <h1>Аналитика</h1>
           <p>Считается на лету по данным реестра: маржа, квалификация, продукты, форматы, выручка, нагрузка команды.</p>
         </div>
-        <select id="aYear" class="btn btn-sm" style="padding:8px 12px;"></select>
+        <select id="aYear" aria-label="Год" class="btn btn-sm" style="padding:8px 12px;"></select>
       </div>
 
       <div class="stats" id="statTiles"></div>
@@ -348,11 +370,11 @@ tbody tr:hover{background:var(--accent-soft);}
             <h3>Проекты по продуктам</h3>
             <p class="sub">Слева — распределение за выбранный квартал, справа — за весь год</p>
           </div>
-          <select id="productQuarterSel" class="btn btn-sm" style="padding:6px 10px;"></select>
+          <select id="productQuarterSel" aria-label="Квартал для круговой диаграммы" class="btn btn-sm" style="padding:6px 10px;"></select>
         </div>
         <div class="grid2">
-          <div class="chartbox"><canvas id="chartProductQuarter"></canvas></div>
-          <div class="chartbox"><canvas id="chartProductYear"></canvas></div>
+          <div class="chartbox"><canvas id="chartProductQuarter" data-title="Проекты по продуктам за выбранный квартал"></canvas></div>
+          <div class="chartbox"><canvas id="chartProductYear" data-title="Проекты по продуктам за весь выбранный период"></canvas></div>
         </div>
       </div>
 
@@ -423,111 +445,111 @@ tbody tr:hover{background:var(--accent-soft);}
 
 <!-- MODAL: project card -->
 <div class="overlay" id="modalOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1">
     <div class="modal-head">
       <div>
         <h2 id="modalTitle">Новый проект</h2>
         <div class="idline" id="modalSub">Заполните поля старта проекта</div>
       </div>
-      <button class="modal-close" id="modalClose">×</button>
+      <button class="modal-close" id="modalClose" type="button" aria-label="Закрыть"><span aria-hidden="true">×</span></button>
     </div>
     <div class="modal-body">
 
       <div class="section-title">Старт проекта</div>
       <div class="fgrid">
         <div class="field span2">
-          <label>Название проекта*</label>
+          <label for="f_name">Название проекта*</label>
           <input type="text" id="f_name" placeholder="Клиент // краткое описание // номер">
         </div>
         <div class="field">
-          <label>ID проекта (номер 1С / КР / П26)*</label>
+          <label for="f_id">ID проекта*</label>
           <input type="text" id="f_id" class="mono" placeholder="напр. PRJ-26-001">
         </div>
         <div class="field">
-          <label>Год</label>
+          <label for="f_year">Год</label>
           <select id="f_year"></select>
         </div>
         <div class="field">
-          <label>Клиент</label>
+          <label for="f_client">Клиент</label>
           <input type="text" id="f_client" list="clientList" placeholder="начни вводить — подскажем">
         </div>
         <div class="field">
-          <label>Продукт</label>
+          <label for="f_product">Продукт</label>
           <select id="f_product"></select>
-          <input type="text" id="f_product_other" placeholder="Впиши новый продукт" style="display:none;margin-top:6px;">
+          <input type="text" id="f_product_other" aria-label="Новый продукт" placeholder="Впиши новый продукт" style="display:none;margin-top:6px;">
         </div>
         <div class="field">
-          <label>Проджект <span class="hint">можно несколько</span></label>
-          <div class="tagbox" id="f_pm_box"></div><input type="hidden" id="f_pm">
+          <label id="f_pm_box_lbl">Проджект <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_pm_box" role="group" aria-labelledby="f_pm_box_lbl"></div><input type="hidden" id="f_pm">
         </div>
         <div class="field">
-          <label>Аккаунт <span class="hint">можно несколько</span></label>
-          <div class="tagbox" id="f_account_box"></div><input type="hidden" id="f_account">
+          <label id="f_account_box_lbl">Аккаунт <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_account_box" role="group" aria-labelledby="f_account_box_lbl"></div><input type="hidden" id="f_account">
         </div>
         <div class="field">
-          <label>Куратор <span class="hint">можно несколько</span></label>
-          <div class="tagbox" id="f_curator_box"></div><input type="hidden" id="f_curator">
+          <label id="f_curator_box_lbl">Куратор <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_curator_box" role="group" aria-labelledby="f_curator_box_lbl"></div><input type="hidden" id="f_curator">
         </div>
         <div class="field">
-          <label>Фасилитаторы <span class="hint">можно несколько</span></label>
-          <div class="tagbox" id="f_facilitators_box"></div><input type="hidden" id="f_facilitators">
+          <label id="f_facilitators_box_lbl">Фасилитаторы <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_facilitators_box" role="group" aria-labelledby="f_facilitators_box_lbl"></div><input type="hidden" id="f_facilitators">
         </div>
         <div class="field">
-          <label>Формат</label>
+          <label for="f_format">Формат</label>
           <select id="f_format">
             <option value="">—</option>
             <option>очно</option><option>онлайн</option><option>гибрид</option><option>асинхронный проект</option>
           </select>
         </div>
         <div class="field">
-          <label>Кол-во участников</label>
+          <label for="f_participants">Кол-во участников</label>
           <select id="f_participants">
             <option value="">—</option>
             <option>до 20</option><option>21-50</option><option>51-80</option><option>81-100</option><option>101-150</option><option>больше 150</option><option>асинхронно</option>
           </select>
         </div>
         <div class="field span2">
-          <label>Место проведения</label>
+          <label for="f_location">Место проведения</label>
           <select id="f_location"></select>
-          <input type="text" id="f_location_other" placeholder="Впиши новое место проведения" style="display:none;margin-top:6px;">
+          <input type="text" id="f_location_other" aria-label="Новое место проведения" placeholder="Впиши новое место проведения" style="display:none;margin-top:6px;">
         </div>
         <div class="field">
-          <label>Тикет (ссылка) <a class="fieldlink" id="f_ticket_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
+          <label for="f_ticket">Тикет (ссылка) <a class="fieldlink" id="f_ticket_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
           <input type="text" id="f_ticket" placeholder="https://tracker.example.com/…">
         </div>
         <div class="field">
-          <label>Смета (файл) <a class="fieldlink" id="f_budgetFile_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
+          <label for="f_budgetFile">Смета (файл) <a class="fieldlink" id="f_budgetFile_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
           <input type="text" id="f_budgetFile">
         </div>
         <div class="field">
-          <label>Цена проекта, ₽</label>
+          <label for="f_price">Цена проекта, ₽</label>
           <input type="text" id="f_price" class="mono">
         </div>
         <div class="field">
-          <label>План маржа, %</label>
+          <label for="f_marginPlan">План маржа, %</label>
           <input type="text" id="f_marginPlan" class="mono">
         </div>
         <div class="field">
-          <label>Период проведения <span class="hint">можно несколько кварталов</span></label>
-          <div class="qbox" id="f_period_box"></div><input type="hidden" id="f_period">
+          <label id="f_period_box_lbl">Период проведения <span class="hint">можно несколько кварталов</span></label>
+          <div class="qbox" id="f_period_box" role="group" aria-labelledby="f_period_box_lbl"></div><input type="hidden" id="f_period">
         </div>
         <div class="field">
-          <label>Период закрытия</label>
-          <div class="qbox" id="f_periodClose_box"></div><input type="hidden" id="f_periodClose">
+          <label id="f_periodClose_box_lbl">Период закрытия</label>
+          <div class="qbox" id="f_periodClose_box" role="group" aria-labelledby="f_periodClose_box_lbl"></div><input type="hidden" id="f_periodClose">
         </div>
         <div class="field">
-          <label>Статус проекта</label>
+          <label for="f_closed">Статус проекта</label>
           <select id="f_closed"><option value="false">Открыт</option><option value="true">Закрыт</option></select>
         </div>
         <div class="field">
-          <label>Фактмаржа, %</label>
+          <label for="f_marginFact">Фактмаржа, %</label>
           <input type="text" id="f_marginFact" class="mono">
         </div>
       </div>
       <div class="warn" id="idWarn" style="display:none;"></div>
 
       <div class="section-title" style="justify-content:space-between;">
-        <span id="qualSectionLabel">Квалификация проекта (после ППМ)</span>
+        <span id="qualSectionLabel">Квалификация проекта (после пост-проектной встречи)</span>
         <button class="btn btn-ghost btn-sm" id="toggleQual" type="button">Развернуть ▾</button>
       </div>
       <div class="collapsible" id="qualBlock">
@@ -536,11 +558,11 @@ tbody tr:hover{background:var(--accent-soft);}
         <div id="qualModern">
           <div class="fgrid">
             <div class="field span2">
-              <label>Формат артефакта</label>
+              <label for="q_artifactFormat">Формат артефакта</label>
               <input type="text" id="q_artifactFormat" placeholder="Методичка, презентация, карточки…">
             </div>
             <div class="field">
-              <label>Ссылка на заметки PPM</label>
+              <label for="q_ppmLink">Ссылка на заметки ППМ</label>
               <input type="text" id="q_ppmLink">
             </div>
           </div>
@@ -551,21 +573,21 @@ tbody tr:hover{background:var(--accent-soft);}
 
           <div class="scoreblock">
             <h4>Бизнес-ценность <span class="tot" id="tot_biz">0</span></h4>
-            <div class="scorerow"><span>Маржа</span><select data-blk="biz" data-k="margin">
+            <div class="scorerow"><span>Маржа</span><select aria-label="Маржа" data-blk="biz" data-k="margin">
               <option value="0">0 — ниже плановой маржи</option>
               <option value="1">1 — сохранили плановую маржу</option>
               <option value="2">2 — преумножили плановую маржу</option>
             </select></div>
-            <div class="scorerow"><span>Потенциал отношений с клиентом</span><select data-blk="biz" data-k="relPotential">
+            <div class="scorerow"><span>Потенциал отношений с клиентом</span><select aria-label="Потенциал отношений с клиентом" data-blk="biz" data-k="relPotential">
               <option value="0">0 — провели, и бог с ним</option>
               <option value="1">1 — провели, клиент в кайфе</option>
               <option value="2">2 — клиент проявил интерес к следующим проектам</option>
             </select></div>
-            <div class="scorerow"><span>PR-эффект</span><select data-blk="biz" data-k="pr">
+            <div class="scorerow"><span>PR-эффект</span><select aria-label="PR-эффект" data-blk="biz" data-k="pr">
               <option value="0">0 — эффекта нет</option>
               <option value="1">1 — планируем кейс / клиент публично рассказал о нас</option>
             </select></div>
-            <div class="scorerow"><span>Ценность для внутренней стратегии</span><select data-blk="biz" data-k="strategy">
+            <div class="scorerow"><span>Ценность для внутренней стратегии</span><select aria-label="Ценность для внутренней стратегии" data-blk="biz" data-k="strategy">
               <option value="0">0 — не соответствует нашему продуктовому портфелю</option>
               <option value="1">1 — соответствует нашему продуктовому портфелю</option>
             </select></div>
@@ -573,38 +595,38 @@ tbody tr:hover{background:var(--accent-soft);}
 
           <div class="scoreblock">
             <h4>Клиент <span class="tot" id="tot_client">0</span></h4>
-            <div class="scorerow"><span>Доверие и сотворчество</span><select data-blk="client" data-k="trust">
+            <div class="scorerow"><span>Доверие и сотворчество</span><select aria-label="Доверие и сотворчество" data-blk="client" data-k="trust">
               <option value="0">0 — гиперконтроль и микроменеджмент, сложное согласование</option>
               <option value="1">1 — всё ровно</option>
               <option value="2">2 — полное доверие</option>
             </select></div>
-            <div class="scorerow"><span>Тайминги и договорённости</span><select data-blk="client" data-k="timing"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
-            <div class="scorerow"><span>WOW-эффект</span><select data-blk="client" data-k="wow">
+            <div class="scorerow"><span>Тайминги и договорённости</span><select aria-label="Тайминги и договорённости" data-blk="client" data-k="timing"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>WOW-эффект</span><select aria-label="WOW-эффект" data-blk="client" data-k="wow">
               <option value="0">0 — отрицательный отклик или ничего не запомнилось</option>
               <option value="1">1 — всё хорошо, ровно</option>
               <option value="2">2 — клиент привёл конкретный пример, что было круто</option>
             </select></div>
-            <div class="scorerow"><span>Удовлетворённость командой</span><select data-blk="client" data-k="satisfaction"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>Удовлетворённость командой</span><select aria-label="Удовлетворённость командой" data-blk="client" data-k="satisfaction"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
           </div>
 
           <div class="scoreblock">
             <h4>Команда <span class="tot" id="tot_team">0</span></h4>
-            <div class="scorerow"><span>Тайминги — куратор</span><select data-blk="team" data-k="timingCurator">
+            <div class="scorerow"><span>Тайминги — куратор</span><select aria-label="Тайминги — куратор" data-blk="team" data-k="timingCurator">
               <option value="0">0 — нарушил дедлайн без предупреждения / прислал материалы в день Х</option>
               <option value="1">1 — уложился в срок, оставил запас другим подрядчикам</option>
               <option value="2">2 — прислал всё заранее, быстро реагировал, был проактивен</option>
             </select></div>
-            <div class="scorerow"><span>Тайминги — остальные</span><select data-blk="team" data-k="timingOthers">
+            <div class="scorerow"><span>Тайминги — остальные</span><select aria-label="Тайминги — остальные" data-blk="team" data-k="timingOthers">
               <option value="0">0 — опоздание повлияло на имидж / серьёзно задержало подготовку</option>
               <option value="1">1 — сделано в срок или с задержкой, о которой предупредили</option>
               <option value="2">2 — проактивно включался в подготовку и проведение</option>
             </select></div>
-            <div class="scorerow"><span>Команда не перегружена</span><select data-blk="team" data-k="notOverloaded">
+            <div class="scorerow"><span>Команда не перегружена</span><select aria-label="Команда не перегружена" data-blk="team" data-k="notOverloaded">
               <option value="0">0 — перегружена</option>
               <option value="1">1 — не перегружена</option>
             </select></div>
-            <div class="scorerow"><span>Доверие, уважение и сотворчество</span><select data-blk="team" data-k="trust"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
-            <div class="scorerow"><span>Развитие и эксперименты</span><select data-blk="team" data-k="growth">
+            <div class="scorerow"><span>Доверие, уважение и сотворчество</span><select aria-label="Доверие, уважение и сотворчество" data-blk="team" data-k="trust"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>Развитие и эксперименты</span><select aria-label="Развитие и эксперименты" data-blk="team" data-k="growth">
               <option value="0">0 — базовый проект</option>
               <option value="1">1 — попробовали новое, развили компетенции</option>
             </select></div>
@@ -612,18 +634,18 @@ tbody tr:hover{background:var(--accent-soft);}
 
           <div class="scoreblock">
             <h4>Менеджмент <span class="tot" id="tot_mgmt">0</span></h4>
-            <div class="scorerow"><span>Нагрузка проджекта</span><select data-blk="mgmt" data-k="pmLoad">
+            <div class="scorerow"><span>Нагрузка проджекта</span><select aria-label="Нагрузка проджекта" data-blk="mgmt" data-k="pmLoad">
               <option value="0">0 — много задач, компенсирует за подрядчиков, жуткий график</option>
               <option value="1">1 — стабильно по нагрузке</option>
               <option value="2">2 — всё на рельсах, минимальная вовлечённость</option>
             </select></div>
-            <div class="scorerow"><span>Логистика и формат</span><select data-blk="mgmt" data-k="logistics">
+            <div class="scorerow"><span>Логистика и формат</span><select aria-label="Логистика и формат" data-blk="mgmt" data-k="logistics">
               <option value="0">0 — 8ч в онлайне / сложная логистика / не хватает сметы на комфорт</option>
               <option value="1">1 — всё стандартно и ровно</option>
               <option value="2">2 — экстра-комфортные условия для команды</option>
             </select></div>
-            <div class="scorerow"><span>Реалистичность сметы</span><select data-blk="mgmt" data-k="budgetRealism"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
-            <div class="scorerow"><span>Качество передачи проекта аккаунтом</span><select data-blk="mgmt" data-k="handoff">
+            <div class="scorerow"><span>Реалистичность сметы</span><select aria-label="Реалистичность сметы" data-blk="mgmt" data-k="budgetRealism"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>Качество передачи проекта аккаунтом</span><select aria-label="Качество передачи проекта аккаунтом" data-blk="mgmt" data-k="handoff">
               <option value="0">0 — в подготовке всплыли косяки передачи</option>
               <option value="1">1 — косяков передачи не было</option>
             </select></div>
@@ -632,7 +654,7 @@ tbody tr:hover{background:var(--accent-soft);}
           <div class="totalscore">
             <div>
               <div style="font-size:12px;color:var(--ink-soft);">Итоговый балл (из 29) и квалификация</div>
-              <select id="f_category" style="margin-top:6px;">
+              <select id="f_category" aria-label="Квалификация проекта" style="margin-top:6px;">
                 <option value="">— выбрать вручную —</option>
                 <option value="Удачный">Удачный</option>
                 <option value="Рабочий">Рабочий</option>
@@ -646,10 +668,10 @@ tbody tr:hover{background:var(--accent-soft);}
           <p class="hint" id="categoryHint" style="margin:2px 0 0;"></p>
 
           <div class="fgrid full" style="margin-top:14px;">
-            <div class="field"><label>Ключевые сложности</label><textarea id="q_difficulties"></textarea></div>
-            <div class="field"><label>Лучшие находки</label><textarea id="q_findings"></textarea></div>
-            <div class="field"><label>ОС по артефакту</label><textarea id="q_artifactFeedback"></textarea></div>
-            <div class="field"><label>Что изменить в будущем</label><textarea id="q_futureChanges"></textarea></div>
+            <div class="field"><label for="q_difficulties">Ключевые сложности</label><textarea id="q_difficulties"></textarea></div>
+            <div class="field"><label for="q_findings">Лучшие находки</label><textarea id="q_findings"></textarea></div>
+            <div class="field"><label for="q_artifactFeedback">ОС по артефакту</label><textarea id="q_artifactFeedback"></textarea></div>
+            <div class="field"><label for="q_futureChanges">Что изменить в будущем</label><textarea id="q_futureChanges"></textarea></div>
           </div>
         </div>
 
@@ -657,7 +679,7 @@ tbody tr:hover{background:var(--accent-soft);}
         <div id="qualLegacy" style="display:none;">
           <p class="hint" style="margin:0 0 12px;">В 2025 году считали только удовлетворённость клиента — единого балла и категории тогда не было.</p>
           <div class="scoreblock">
-            <div class="scorerow"><span>Удовлетворённость, %</span><input type="text" id="lg_satisfaction" class="mono" style="width:100%;" placeholder="0–100"></div>
+            <div class="scorerow"><span>Удовлетворённость, %</span><input type="text" id="lg_satisfaction" aria-label="Удовлетворённость, %" class="mono" style="width:100%;" placeholder="0–100"></div>
           </div>
         </div>
 
@@ -676,22 +698,22 @@ tbody tr:hover{background:var(--accent-soft);}
 
 <!-- MODAL: card field constructor -->
 <div class="overlay" id="cfOverlay">
-  <div class="modal" style="max-width:560px;">
+  <div class="modal" style="max-width:560px;" role="dialog" aria-modal="true" aria-labelledby="cfModalTitle" tabindex="-1">
     <div class="modal-head">
       <div>
         <h2 id="cfModalTitle">Карточка проекта</h2>
         <div class="idline">Какие поля показывать на карточке и в каком порядке — настройка своя для этого года.</div>
       </div>
-      <button class="modal-close" id="cfModalClose">×</button>
+      <button class="modal-close" id="cfModalClose" type="button" aria-label="Закрыть"><span aria-hidden="true">×</span></button>
     </div>
     <div class="modal-body">
       <div class="section-title">Название проекта всегда на карточке первым</div>
       <div id="cfList"></div>
       <div class="section-title">Добавить поле</div>
       <div class="cf-add">
-        <input type="text" id="cf_label" placeholder="Название (напр. Клиент)">
-        <input type="text" id="cf_key" placeholder="Описание — техническое имя поля (напр. client)">
-        <button class="btn btn-primary" id="cf_addBtn" type="button">＋ Добавить</button>
+        <input type="text" id="cf_label" aria-label="Название поля" placeholder="Название (напр. Клиент)">
+        <input type="text" id="cf_key" aria-label="Техническое имя поля" placeholder="Описание — техническое имя поля (напр. client)">
+        <button class="btn btn-primary" id="cf_addBtn" type="button"><span aria-hidden="true">＋</span> Добавить</button>
       </div>
       <p class="cf-hint">Имя поля — это как оно называется в карточке проекта (price, client, product, pm, account, curator, facilitators, format, participants, location, marginPlan, marginFact, period, periodClose, closed, ticket, budgetFile, category).</p>
     </div>
@@ -703,7 +725,7 @@ tbody tr:hover{background:var(--accent-soft);}
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <datalist id="clientList"></datalist>
 <datalist id="pmList"></datalist>
@@ -954,12 +976,12 @@ function legacyAvg(p){
 // ---------- NAV ----------
 function renderNav(){
   const maxModern = Math.max(...modernYears);
-  let html = `<button class="nav-btn" data-view="p2025"><span class="nav-ico">🗄</span> Архив 2025</button>`;
+  let html = `<button class="nav-btn" data-view="p2025"><span class="nav-ico" aria-hidden="true">🗄</span> Архив 2025</button>`;
   modernYears.forEach(y=>{
     const isActive = y===maxModern;
-    html += `<button class="nav-btn" data-view="pmodern" data-year="${y}"><span class="nav-ico">${isActive?'☰':'🗄'}</span> ${isActive?'Проекты':'Архив'} ${y}</button>`;
+    html += `<button class="nav-btn" data-view="pmodern" data-year="${y}"><span class="nav-ico" aria-hidden="true">${isActive?'☰':'🗄'}</span> ${isActive?'Проекты':'Архив'} ${y}</button>`;
   });
-  html += `<button class="nav-btn" data-view="analytics"><span class="nav-ico">◧</span> Аналитика</button>`;
+  html += `<button class="nav-btn" data-view="analytics"><span class="nav-ico" aria-hidden="true">◧</span> Аналитика</button>`;
   document.getElementById('navList').innerHTML = html;
 }
 function setActiveNavBtn(view, year){
@@ -996,18 +1018,20 @@ document.getElementById('navList').addEventListener('click', (e)=>{
   if(view==='pmodern') switchModernYear(currentModernYear);
   if(view==='analytics') renderAnalytics();
 });
-document.getElementById('addYearBtn').addEventListener('click', ()=>{
-  const input = prompt('Введите год, который нужно добавить (например, 2027):');
+document.getElementById('addYearBtn').addEventListener('click', async ()=>{
+  const input = await uiDialog({
+    title: 'Добавить год',
+    message: 'Введите год, который нужно добавить (например, 2027).',
+    confirmLabel: 'Добавить',
+    input: {label:'Год', placeholder:'2027', inputmode:'numeric', validate: v=>{
+      const y = parseInt(v, 10);
+      if(!/^\d{4}$/.test(v) || y < 2000 || y > 2100) return 'Введите корректный год, например 2027.';
+      if(y <= 2025) return '2025 и более ранние годы — это архив со старой моделью квалификации, его добавлять так не нужно.';
+      return '';
+    }}
+  });
   if(input===null) return;
-  const year = parseInt(input.trim(), 10);
-  if(!Number.isInteger(year) || year < 2000 || year > 2100){
-    alert('Введите корректный год, например 2027.');
-    return;
-  }
-  if(year <= 2025){
-    alert('2025 и более ранние годы — это архив со старой моделью квалификации, его добавлять так не нужно.');
-    return;
-  }
+  const year = parseInt(input, 10);
   const isNew = !modernYears.includes(year);
   if(isNew){
     modernYears.push(year);
@@ -1034,12 +1058,12 @@ function renderCfList(){
   list.innerHTML = fields.map((f,i)=> `
     <div class="cf-row" data-i="${i}">
       <div class="cf-btns">
-        <button type="button" class="cf-up" ${i===0?'disabled':''} title="Выше">↑</button>
-        <button type="button" class="cf-down" ${i===fields.length-1?'disabled':''} title="Ниже">↓</button>
+        <button type="button" class="cf-up" ${i===0?'disabled':''} title="Выше" aria-label="Поднять выше">↑</button>
+        <button type="button" class="cf-down" ${i===fields.length-1?'disabled':''} title="Ниже" aria-label="Опустить ниже">↓</button>
       </div>
       <div class="cf-label">${escapeHtml(f.label)}</div>
       <div class="cf-key mono">${escapeHtml(f.key)}</div>
-      <div class="cf-btns"><button type="button" class="cf-del" title="Убрать">×</button></div>
+      <div class="cf-btns"><button type="button" class="cf-del" title="Убрать" aria-label="Убрать поле ${escapeAttr(f.label)}">×</button></div>
     </div>`).join('') || '<p class="cf-hint">Пока нет ни одного поля — карточка показывает только название проекта.</p>';
 }
 function openCardFieldsModal(){
@@ -1087,9 +1111,10 @@ document.getElementById('cf_addBtn').addEventListener('click', ()=>{
   render2026();
 });
 
-document.getElementById('resetLink').addEventListener('click', (e)=>{
+document.getElementById('resetLink').addEventListener('click', async (e)=>{
   e.preventDefault();
-  if(confirm('Стереть все изменения в этом браузере и вернуть исходные 50 демо-проектов?')) resetData();
+  const ok = await uiDialog({title:'Сбросить данные?', message:'Все изменения в этом браузере будут стёрты, вернутся исходные 50 демо-проектов.', confirmLabel:'Сбросить', danger:true});
+  if(ok) resetData();
 });
 
 function fillSelect(id, values, placeholder){
@@ -1236,7 +1261,7 @@ function render2026(){
       return `<div class="pcard-row"><span class="pcard-k">${escapeHtml(f.label)}</span><span class="pcard-v">${formatCardFieldValue(p, f.key)}</span></div>`;
     }).join('');
     return `<div class="pcard ${statusClass}" data-id="${escapeAttr(p.id)}">
-      <div class="pcard-name">${escapeHtml(p.name)}</div>
+      <div class="pcard-name"><button type="button" class="pcard-open" aria-haspopup="dialog">${escapeHtml(p.name)}</button></div>
       ${hasPrice ? '' : `<div style="margin-bottom:8px">${badge}</div>`}${body}
     </div>`;
   }).join('');
@@ -1287,7 +1312,7 @@ function render2025(){
     const statusTag = p.closed ? `<span class="tag tag-neutral">Закрыт</span>` : `<span class="tag tag-work">В работе</span>`;
     const sat = p.legacy && p.legacy.satisfaction!=null ? fmtPct(p.legacy.satisfaction) : '—';
     return `<tr data-id="${escapeAttr(p.id)}">
-      <td><div class="proj-name">${escapeHtml(p.name)}</div><div class="proj-id mono">${escapeHtml(p.id)}</div></td>
+      <td><div class="proj-name"><button type="button" class="row-open" aria-haspopup="dialog">${escapeHtml(p.name)}</button></div><div class="proj-id mono">${escapeHtml(p.id)}</div></td>
       <td>${escapeHtml(p.client||'—')}</td>
       <td>${escapeHtml(p.product||'—')}</td>
       <td>${escapeHtml(p.pm||'—')}</td>
@@ -1332,7 +1357,7 @@ function toggleQualSection(year){
     label.textContent = 'Архивная квалификация ' + year;
   } else {
     modern.style.display = 'block'; legacy.style.display = 'none';
-    label.textContent = 'Квалификация проекта (после ППМ)';
+    label.textContent = 'Квалификация проекта (после пост-проектной встречи)';
   }
 }
 
@@ -1389,7 +1414,7 @@ function renderTagBox(id){
   if(!box) return;
   const names = splitNames(document.getElementById(id).value);
   box.querySelector('.tags').innerHTML = names.map((n,i)=>
-    `<span class="tag">${escapeHtml(n)}<button type="button" class="tagx" data-i="${i}" aria-label="Убрать">×</button></span>`).join('');
+    `<span class="tag">${escapeHtml(n)}<button type="button" class="tagx" data-i="${i}" aria-label="Убрать ${escapeAttr(n)}">×</button></span>`).join('');
 }
 function refreshTagBoxes(){ Object.keys(TAGBOX_LISTS).forEach(renderTagBox); }
 function addTagNames(id, raw){
@@ -1410,7 +1435,7 @@ function initTagBoxes(){
     const box = document.getElementById(id+'_box');
     if(!box || box.dataset.ready) return;
     box.dataset.ready = '1';
-    box.innerHTML = '<span class="tags"></span><input type="text" class="taginput" list="'+TAGBOX_LISTS[id]+'" placeholder="добавить…" autocomplete="off">';
+    box.innerHTML = '<span class="tags"></span><input type="text" class="taginput" list="'+TAGBOX_LISTS[id]+'" placeholder="добавить…" aria-label="Добавить имя" autocomplete="off">';
     const inp = box.querySelector('.taginput');
     box.addEventListener('click', e=>{
       const x = e.target.closest('.tagx');
@@ -1671,11 +1696,14 @@ document.getElementById('btnSave').addEventListener('click', ()=>{
   toast(wasEdit ? 'Изменения сохранены' : 'Проект добавлен');
 });
 
-document.getElementById('btnDelete').addEventListener('click', ()=>{
+document.getElementById('btnDelete').addEventListener('click', async ()=>{
   if(!editingId) return;
-  if(!confirm('Удалить проект «'+ (DATA.find(p=>p.id===editingId)||{}).name +'»?')) return;
-  markRemoved(editingId);
-  DATA = DATA.filter(p=>p.id!==editingId);
+  const delId = editingId;
+  const target = DATA.find(p=>p.id===delId);
+  const ok = await uiDialog({title:'Удалить проект?', message:'«'+(target ? target.name : '')+'» будет удалён без возможности восстановления.', confirmLabel:'Удалить проект', danger:true});
+  if(!ok) return;
+  markRemoved(delId);
+  DATA = DATA.filter(p=>p.id!==delId);
   closeModal();
   renderEverything();
   toast('Проект удалён');
@@ -2068,6 +2096,128 @@ function renderYearComparison(){
   });
 }
 
+
+// ---------- ACCESSIBILITY LAYER ----------
+// Text alternative for every chart: title + the plotted values, refreshed on every update.
+Chart.register({
+  id: 'a11yDescription',
+  afterUpdate(chart){
+    const canvas = chart.canvas;
+    const panel = canvas.closest('.panel');
+    const h3 = panel && panel.querySelector('h3');
+    const subEl = panel && panel.querySelector('.sub');
+    const title = canvas.dataset.title || (h3 ? h3.textContent.trim() : 'График');
+    const sub = subEl ? subEl.textContent.trim() : '';
+    const labels = (chart.data.labels || []).map(l=> Array.isArray(l) ? l.join(' ') : String(l));
+    const num = v => String(Math.round(v*10)/10).replace('.', ',');
+    const many = chart.data.datasets.length > 1;
+    const parts = chart.data.datasets.map(ds=>{
+      const vals = (ds.data || []).map((v,i)=> [labels[i], v]).filter(([,v])=> v!=null && v!==0 && !Number.isNaN(v))
+        .map(([l,v])=> (l!==undefined ? l+': ' : '') + num(v));
+      return (many && ds.label ? ds.label+' — ' : '') + (vals.length ? vals.join('; ') : 'нет данных');
+    });
+    let text = title + (sub ? '. ' + sub : '') + '. ' + parts.join('. ');
+    if(text.length > 900) text = text.slice(0, 897) + '…';
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', text);
+  }
+});
+
+// Modals: focus moves in, Tab stays inside, Esc closes, the page behind is inert, focus returns on close.
+const appRoot = document.querySelector('.app');
+const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+const openers = new Map();
+const allOverlays = () => [...document.querySelectorAll('.overlay')];
+const activeOverlays = () => allOverlays().filter(o=> o.classList.contains('active'));
+const topOverlay = () => { const a = activeOverlays(); return a.length ? a[a.length-1] : null; };
+const focusablesIn = root => [...root.querySelectorAll(FOCUSABLE)].filter(el=> el.getClientRects().length);
+function syncModalState(){
+  const top = topOverlay();
+  appRoot.inert = !!top;
+  allOverlays().forEach(o=>{ o.inert = !!top && o!==top && o.classList.contains('active'); });
+}
+// Remember what was activated last (click or Enter/Space on a button), so focus can go back to exactly that control
+// even when a dialog moves focus inside before the observer runs, and in browsers that don't focus buttons on click.
+let lastTrigger = null;
+document.addEventListener('click', e=>{ const t = e.target.closest('button,a[href],[tabindex]'); if(t) lastTrigger = t; }, true);
+const modalObserver = new MutationObserver(records=>{
+  records.forEach(r=>{
+    const o = r.target;
+    const active = o.classList.contains('active');
+    const tracked = openers.has(o);
+    if(active && !tracked){
+      openers.set(o, (lastTrigger && document.contains(lastTrigger)) ? lastTrigger : document.activeElement);
+      syncModalState();
+      const modal = o.querySelector('.modal');
+      if(modal && !modal.contains(document.activeElement)) modal.focus();
+    } else if(!active && tracked){
+      const opener = openers.get(o);
+      openers.delete(o);
+      syncModalState();
+      const fallback = document.querySelector('.view.active .pcard-open, .view.active .row-open') || document.getElementById('a_new');
+      const target = (opener && document.contains(opener) && opener.getClientRects().length) ? opener : fallback;
+      if(target) target.focus();
+    }
+  });
+});
+allOverlays().forEach(o=> modalObserver.observe(o, {attributes:true, attributeFilter:['class']}));
+document.addEventListener('keydown', e=>{
+  const top = topOverlay();
+  if(!top) return;
+  if(e.key === 'Escape'){
+    e.preventDefault();
+    const btn = top.querySelector('[data-cancel]') || top.querySelector('.modal-close') || top.querySelector('[data-ok]');
+    if(btn) btn.click();
+  } else if(e.key === 'Tab'){
+    const modal = top.querySelector('.modal');
+    const items = focusablesIn(modal);
+    if(!items.length){ e.preventDefault(); return; }
+    const first = items[0], last = items[items.length-1], inside = modal.contains(document.activeElement);
+    if(e.shiftKey && (document.activeElement===first || !inside)){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && (document.activeElement===last || !inside)){ e.preventDefault(); first.focus(); }
+  }
+});
+
+// Own confirm / input dialog instead of the native browser ones. Resolves true/false, or string/null with an input.
+let dialogSeq = 0;
+function uiDialog({title, message, confirmLabel='ОК', cancelLabel='Отмена', danger=false, input=null}){
+  return new Promise(resolve=>{
+    const id = 'dlg' + (++dialogSeq);
+    const o = document.createElement('div');
+    o.className = 'overlay';
+    o.innerHTML = `<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="${id}t" aria-describedby="${id}d" tabindex="-1" style="max-width:440px;">
+      <div class="modal-head"><div><h2 id="${id}t">${escapeHtml(title)}</h2></div></div>
+      <div class="modal-body" style="max-height:none;">
+        <p id="${id}d" style="margin:0 0 14px;">${escapeHtml(message)}</p>
+        ${input ? `<div class="field"><label for="${id}i">${escapeHtml(input.label)}</label>
+          <input type="text" id="${id}i" inputmode="${input.inputmode||'text'}" placeholder="${escapeAttr(input.placeholder||'')}" autocomplete="off" aria-describedby="${id}e">
+          <p class="cf-hint" id="${id}e" role="alert" style="color:var(--bad-ink);min-height:1.2em;"></p></div>` : ''}
+      </div>
+      <div class="modal-foot"><div style="margin-left:auto;display:flex;gap:10px;">
+        <button type="button" class="btn" data-cancel>${escapeHtml(cancelLabel)}</button>
+        <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-ok>${escapeHtml(confirmLabel)}</button>
+      </div></div></div>`;
+    document.body.appendChild(o);
+    modalObserver.observe(o, {attributes:true, attributeFilter:['class']});
+    const okBtn = o.querySelector('[data-ok]'), cancelBtn = o.querySelector('[data-cancel]');
+    const inp = input ? o.querySelector('input') : null, err = input ? o.querySelector('[role="alert"]') : null;
+    const finish = value => { o.classList.remove('active'); resolve(value); setTimeout(()=> o.remove(), 0); };
+    cancelBtn.addEventListener('click', ()=> finish(input ? null : false));
+    okBtn.addEventListener('click', ()=>{
+      if(!input) return finish(true);
+      const v = inp.value.trim();
+      const problem = input.validate ? input.validate(v) : '';
+      if(problem){ err.textContent = problem; inp.setAttribute('aria-invalid', 'true'); inp.focus(); return; }
+      finish(v);
+    });
+    if(inp){
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); okBtn.click(); } });
+      inp.addEventListener('input', ()=>{ err.textContent = ''; inp.removeAttribute('aria-invalid'); });
+    }
+    o.classList.add('active');
+    (inp || cancelBtn).focus();
+  });
+}
 
 // ---------- INIT ----------
 async function bootApp(){
