@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
 <title>PMO Analytics Hub — демо</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,6 +45,9 @@
   --bad:#D06868; --bad-soft:#331D1D;
     --ok-ink:#4FAF7C; --work-ink:#6E9BC6; --risk-ink:#D9A24E; --bad-ink:#DB7B7B;
 }
+:root{color-scheme:light dark;}
+:root[data-theme="light"]{color-scheme:light;}
+:root[data-theme="dark"]{color-scheme:dark;}
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;}
 .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
@@ -138,7 +142,7 @@ tbody tr:hover{background:var(--accent-soft);}
 .cf-row .cf-label{font-weight:600;font-size:13px;min-width:140px;}
 .cf-row .cf-key{color:var(--ink-soft);font-size:11.5px;font-family:'IBM Plex Mono',monospace;flex:1;}
 .cf-row .cf-btns{display:flex;gap:4px;}
-.cf-row button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1;}
+.cf-row button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:14px;line-height:1;}
 .cf-row button:hover{border-color:var(--accent);color:var(--accent);}
 .cf-add{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
 .cf-add input{flex:1;min-width:140px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;}
@@ -152,7 +156,7 @@ tbody tr:hover{background:var(--accent-soft);}
 
 /* Charts / panels */
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
-.panel h3{margin:0 0 3px;font-size:14.5px;}
+.panel h2{margin:0 0 3px;font-size:14.5px;}
 .panel .sub{font-size:12px;color:var(--ink-soft);margin:0 0 14px;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 @media (max-width:980px){.grid2{grid-template-columns:1fr;}}
@@ -188,7 +192,7 @@ tbody tr:hover{background:var(--accent-soft);}
 .tagbox:focus-within{border-color:var(--accent);}
 .tagbox .tags{display:contents;}
 .tagbox .tag{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;}
-.tagbox .tagx{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:14px;line-height:1;padding:0 4px;border-radius:50%;}
+.tagbox .tagx{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:14px;line-height:1;padding:0 6px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;margin:-4px 0;}
 .tagbox .tagx:hover{color:var(--bad);}
 .field .tagbox input.taginput{border:none;background:transparent;padding:4px;flex:1;min-width:110px;width:auto;outline:none;font-size:13px;}
 .fieldlink{font-size:11.5px;font-weight:600;margin-left:6px;color:var(--accent);text-decoration:none;}
@@ -199,8 +203,8 @@ tbody tr:hover{background:var(--accent-soft);}
 .qbox .qchip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
 .qbox .qchip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
 .scoreblock{border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px;background:var(--bg);}
-.scoreblock h4{margin:0 0 8px;font-size:12.5px;display:flex;justify-content:space-between;}
-.scoreblock h4 .tot{font-family:'IBM Plex Mono',monospace;color:var(--accent);}
+.scoreblock h3{margin:0 0 8px;font-size:12.5px;display:flex;justify-content:space-between;}
+.scoreblock h3 .tot{font-family:'IBM Plex Mono',monospace;color:var(--accent);}
 .scorerow{display:flex;flex-direction:column;gap:5px;padding:7px 0;font-size:12.5px;border-bottom:1px dashed var(--line);}
 .scorerow:last-child{border-bottom:none;}
 .scorerow>span{font-weight:500;color:var(--ink);}
@@ -252,7 +256,10 @@ button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible,te
 .overlay{overscroll-behavior:contain;}
 .modal-body{overscroll-behavior:contain;}
 button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
-@media (pointer:coarse){ input,select,textarea{font-size:16px !important;} }
+@media (pointer:coarse){ input,select,textarea{font-size:16px !important;}
+  .cf-row button{width:40px;height:40px;}
+  .tagbox .tagx{min-width:40px;min-height:40px;margin:-10px -4px;}
+  .modal-close{min-width:44px;min-height:44px;font-size:24px;} }
 @media (prefers-reduced-motion:reduce){ *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;} }
 </style>
 </head>
@@ -353,12 +360,12 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
 
       <div class="grid2">
         <div class="panel">
-          <h3>Маржа по кварталам</h3>
+          <h2>Маржа по кварталам</h2>
           <p class="sub">План vs факт, среднее по проектам квартала</p>
           <div class="chartbox"><canvas id="chartMargin"></canvas></div>
         </div>
         <div class="panel">
-          <h3>Квалификация проектов по кварталам</h3>
+          <h2>Квалификация проектов по кварталам</h2>
           <p class="sub">Распределение по квалификации (только оценённые проекты, 2026+)</p>
           <div class="chartbox"><canvas id="chartQual"></canvas></div>
         </div>
@@ -367,7 +374,7 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
           <div>
-            <h3>Проекты по продуктам</h3>
+            <h2>Проекты по продуктам</h2>
             <p class="sub">Слева — распределение за выбранный квартал, справа — за весь год</p>
           </div>
           <select id="productQuarterSel" aria-label="Квартал для круговой диаграммы" class="btn btn-sm" style="padding:6px 10px;"></select>
@@ -380,32 +387,32 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
 
       <div class="grid2">
         <div class="panel">
-          <h3>Формат проведения</h3>
+          <h2>Формат проведения</h2>
           <p class="sub" id="fmtSub"></p>
           <div class="chartbox"><canvas id="chartFormat"></canvas></div>
         </div>
         <div class="panel">
-          <h3>Место проведения</h3>
+          <h2>Место проведения</h2>
           <p class="sub" id="locSub"></p>
           <div class="chartbox"><canvas id="chartLocation"></canvas></div>
         </div>
       </div>
 
       <div class="panel">
-        <h3>Количество участников</h3>
+        <h2>Количество участников</h2>
         <p class="sub" id="partSub"></p>
         <div class="chartbox"><canvas id="chartParticipants"></canvas></div>
       </div>
 
       <div class="panel">
-        <h3>Сравнение по годам</h3>
+        <h2>Сравнение по годам</h2>
         <p class="sub">Итоги по годам целиком и разбивка по одноимённым кварталам (напр. Q1 2025 vs Q1 2026 vs Q1 2027)</p>
         <table class="minitable" id="yearCompareTable" style="margin-bottom:16px;"></table>
         <div class="chartbox"><canvas id="chartYearCount"></canvas></div>
       </div>
 
       <div class="panel">
-        <h3>Стоимость проектов</h3>
+        <h2>Стоимость проектов</h2>
         <p class="sub">Средняя цена проекта — по годам и по одноимённым кварталам</p>
         <div class="grid2">
           <div class="chartbox"><canvas id="chartYearPrice"></canvas></div>
@@ -414,25 +421,25 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
       </div>
 
       <div class="panel">
-        <h3>Выручка по клиентам</h3>
+        <h2>Выручка по клиентам</h2>
         <p class="sub">Сумма «Цены проекта» по клиенту — по кварталам и за выбранный год целиком</p>
         <table class="minitable" id="clientRevenueTable"></table>
       </div>
 
       <div class="panel">
-        <h3>Загрузка кураторов</h3>
+        <h2>Загрузка кураторов</h2>
         <p class="sub">Количество проектов по кварталам</p>
         <div class="chartbox"><canvas id="chartCurator"></canvas></div>
       </div>
 
       <div class="grid2">
         <div class="panel">
-          <h3>Нагрузка проджектов</h3>
+          <h2>Нагрузка проджектов</h2>
           <p class="sub">По выбранному году — количество проектов и средняя фактмаржа</p>
           <table class="minitable" id="pmLoadTable"></table>
         </div>
         <div class="panel">
-          <h3>Загрузка фасилитаторов</h3>
+          <h2>Загрузка фасилитаторов</h2>
           <p class="sub">По выбранному году — количество проектов</p>
           <table class="minitable" id="facLoadTable"></table>
         </div>
@@ -572,7 +579,7 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
           </div>
 
           <div class="scoreblock">
-            <h4>Бизнес-ценность <span class="tot" id="tot_biz">0</span></h4>
+            <h3>Бизнес-ценность <span class="tot" id="tot_biz">0</span></h3>
             <div class="scorerow"><span>Маржа</span><select aria-label="Маржа" data-blk="biz" data-k="margin">
               <option value="0">0 — ниже плановой маржи</option>
               <option value="1">1 — сохранили плановую маржу</option>
@@ -594,7 +601,7 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
           </div>
 
           <div class="scoreblock">
-            <h4>Клиент <span class="tot" id="tot_client">0</span></h4>
+            <h3>Клиент <span class="tot" id="tot_client">0</span></h3>
             <div class="scorerow"><span>Доверие и сотворчество</span><select aria-label="Доверие и сотворчество" data-blk="client" data-k="trust">
               <option value="0">0 — гиперконтроль и микроменеджмент, сложное согласование</option>
               <option value="1">1 — всё ровно</option>
@@ -610,7 +617,7 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
           </div>
 
           <div class="scoreblock">
-            <h4>Команда <span class="tot" id="tot_team">0</span></h4>
+            <h3>Команда <span class="tot" id="tot_team">0</span></h3>
             <div class="scorerow"><span>Тайминги — куратор</span><select aria-label="Тайминги — куратор" data-blk="team" data-k="timingCurator">
               <option value="0">0 — нарушил дедлайн без предупреждения / прислал материалы в день Х</option>
               <option value="1">1 — уложился в срок, оставил запас другим подрядчикам</option>
@@ -633,7 +640,7 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
           </div>
 
           <div class="scoreblock">
-            <h4>Менеджмент <span class="tot" id="tot_mgmt">0</span></h4>
+            <h3>Менеджмент <span class="tot" id="tot_mgmt">0</span></h3>
             <div class="scorerow"><span>Нагрузка проджекта</span><select aria-label="Нагрузка проджекта" data-blk="mgmt" data-k="pmLoad">
               <option value="0">0 — много задач, компенсирует за подрядчиков, жуткий график</option>
               <option value="1">1 — стабильно по нагрузке</option>
@@ -2104,7 +2111,7 @@ Chart.register({
   afterUpdate(chart){
     const canvas = chart.canvas;
     const panel = canvas.closest('.panel');
-    const h3 = panel && panel.querySelector('h3');
+    const h3 = panel && panel.querySelector('h2');
     const subEl = panel && panel.querySelector('.sub');
     const title = canvas.dataset.title || (h3 ? h3.textContent.trim() : 'График');
     const sub = subEl ? subEl.textContent.trim() : '';
