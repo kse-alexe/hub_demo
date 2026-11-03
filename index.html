@@ -1,0 +1,2087 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMO Analytics Hub — демо</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#EDEDEF; --panel:#FFFFFF; --ink:#21212C; --ink-soft:#6B6C78; --line:#E1E1E5;
+  --sidebar:#21212C; --sidebar-ink:#F1F1F3; --sidebar-ink-dim:#9A9AA8;
+  --accent:#3B5BDB; --accent-ink:#FFFFFF; --accent-soft:#E8EDFC;
+  --ok:#2F8F5B; --ok-soft:#E5F3EA;
+  --work:#3B6FA0; --work-soft:#E7EFF6;
+  --risk:#C98A2B; --risk-soft:#FBF1DF;
+  --bad:#B33B3B; --bad-soft:#F8E6E6;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(20,20,30,.06), 0 8px 24px rgba(20,20,30,.05);
+}
+[data-theme="dark"], :root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#17171E; --panel:#1F1F29; --ink:#EDEDF1; --ink-soft:#9C9CA8; --line:#33333F;
+    --sidebar:#121218; --sidebar-ink:#F1F1F3; --sidebar-ink-dim:#878791;
+    --accent:#8FA4F5; --accent-ink:#10142A; --accent-soft:#1E2442;
+    --ok:#4FAF7C; --ok-soft:#173324;
+    --work:#6E9BC6; --work-soft:#182531;
+    --risk:#D9A24E; --risk-soft:#332A16;
+    --bad:#D06868; --bad-soft:#331D1D;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17171E; --panel:#1F1F29; --ink:#EDEDF1; --ink-soft:#9C9CA8; --line:#33333F;
+  --sidebar:#121218; --sidebar-ink:#F1F1F3; --sidebar-ink-dim:#878791;
+  --accent:#8FA4F5; --accent-ink:#10142A; --accent-soft:#1E2442;
+  --ok:#4FAF7C; --ok-soft:#173324;
+  --work:#6E9BC6; --work-soft:#182531;
+  --risk:#D9A24E; --risk-soft:#332A16;
+  --bad:#D06868; --bad-soft:#331D1D;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:14px;line-height:1.5;}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+button{font-family:inherit;}
+a{color:var(--accent);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px;}
+
+.app{display:flex;min-height:100vh;}
+
+/* Sidebar */
+.sidebar{width:216px;flex:0 0 216px;background:var(--sidebar);color:var(--sidebar-ink);position:relative;}
+.sidebar-inner{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:20px 14px;overflow:hidden;}
+.brand{padding:4px 8px 22px 8px;position:relative;z-index:1;}
+.brand-mark{font-weight:700;font-size:17px;letter-spacing:-.01em;color:#fff;display:flex;align-items:center;gap:9px;}
+.brand-logo{height:24px;width:24px;border-radius:50%;display:block;box-shadow:0 0 0 1px rgba(255,255,255,.14);}
+.nav{position:relative;z-index:1;}
+.sidebar-foot{position:relative;z-index:1;}
+.demo-banner{background:var(--accent-soft);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px;margin:0 0 16px;font-size:12.5px;}
+.display{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:400;letter-spacing:-.01em;}
+.brand-sub{font-size:12px;color:var(--sidebar-ink-dim);margin-top:3px;}
+.nav{display:flex;flex-direction:column;gap:2px;}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;border:none;background:transparent;color:var(--sidebar-ink-dim);text-align:left;font-size:13.5px;font-weight:500;cursor:pointer;transition:background .12s;}
+.nav-btn:hover{background:rgba(255,255,255,.06);color:var(--sidebar-ink);}
+.nav-btn.active{background:rgba(255,255,255,.1);color:#fff;}
+.btn-addyear{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;padding:8px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.25);background:transparent;color:var(--sidebar-ink-dim);text-align:center;font-size:12.5px;font-weight:500;cursor:pointer;transition:.12s;box-sizing:border-box;}
+.btn-addyear:hover{border-color:var(--accent);color:var(--accent);}
+.nav-ico{width:16px;text-align:center;opacity:.9;}
+.sidebar-foot{margin-top:auto;padding:10px 8px 2px;font-size:11.5px;color:var(--sidebar-ink-dim);border-top:1px solid rgba(255,255,255,.08);padding-top:14px;}
+
+/* Main */
+.main{flex:1;min-width:0;padding:26px 32px 60px;max-width:1320px;}
+.view{display:none;}
+.view.active{display:block;}
+.pagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+.pagehead h1{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:400;font-size:26px;margin:0 0 4px;letter-spacing:-.005em;}
+.pagehead p{margin:0;color:var(--ink-soft);font-size:13px;}
+
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;transition:.12s;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+.btn-primary:hover{filter:brightness(1.06);color:var(--accent-ink);}
+.btn-ghost{border-color:transparent;background:transparent;}
+.btn-danger{color:var(--bad);border-color:var(--bad-soft);}
+.btn-danger:hover{border-color:var(--bad);color:var(--bad);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+
+/* Filters */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px;}
+.filters select, .filters input[type=text]{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:7px;padding:7px 9px;font-size:12.5px;font-family:inherit;}
+.filters input[type=text]{min-width:200px;flex:1;}
+.filters .fcount{margin-left:auto;font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+
+/* Table */
+.tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{text-align:left;font-weight:600;color:var(--ink-soft);font-size:11.5px;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel);position:sticky;top:0;}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr{cursor:pointer;transition:background .1s;}
+tbody tr:hover{background:var(--accent-soft);}
+.proj-name{font-weight:500;max-width:340px;}
+.proj-id{color:var(--ink-soft);font-size:11.5px;}
+.num{font-family:'IBM Plex Mono',monospace;white-space:nowrap;}
+.tag{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap;}
+.tag-ok{background:var(--ok-soft);color:var(--ok);}
+.tag-work{background:var(--work-soft);color:var(--work);}
+.tag-risk{background:var(--risk-soft);color:var(--risk);}
+.tag-bad{background:var(--bad-soft);color:var(--bad);}
+.tag-neutral{background:var(--bg);color:var(--ink-soft);border:1px solid var(--line);}
+.dim{color:var(--ink-soft);}
+.empty{padding:50px 20px;text-align:center;color:var(--ink-soft);}
+
+/* Project cards */
+.cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:10px;}
+.pcard{border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);cursor:pointer;border:1px solid var(--line);border-left:4px solid var(--line);transition:.12s;background:var(--panel);}
+.pcard:hover{border-color:var(--accent);transform:translateY(-1px);}
+.pcard.st-work{border-left-color:var(--work);background:var(--work-soft);}
+.pcard.st-closed{border-left-color:var(--ink-soft);background:var(--bg);}
+.pcard-name{font-weight:600;font-size:14px;margin-bottom:6px;line-height:1.35;}
+.pcard-price{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;color:var(--accent);margin-bottom:10px;}
+.pcard-pricebar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.pcard-pricebar .pcard-price{margin-bottom:0;}
+.pcard .tag{font-size:11px;padding:2px 8px;}
+.pcard-row{display:flex;justify-content:space-between;font-size:12.5px;gap:8px;margin-bottom:5px;}
+.pcard-k{color:var(--ink-soft);}
+.pcard-v{font-weight:500;text-align:right;}
+.pcard .ticket-link{display:block;margin:2px 0 5px;}
+
+/* Card field constructor */
+.cf-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--bg);}
+.cf-row .cf-label{font-weight:600;font-size:13px;min-width:140px;}
+.cf-row .cf-key{color:var(--ink-soft);font-size:11.5px;font-family:'IBM Plex Mono',monospace;flex:1;}
+.cf-row .cf-btns{display:flex;gap:4px;}
+.cf-row button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:13px;line-height:1;}
+.cf-row button:hover{border-color:var(--accent);color:var(--accent);}
+.cf-add{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.cf-add input{flex:1;min-width:140px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;}
+.cf-hint{font-size:12px;color:var(--ink-soft);margin:4px 0 0;}
+
+/* Stat tiles */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px;}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);}
+.stat .v{font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:400;letter-spacing:-.01em;color:var(--accent);}
+.stat .l{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+
+/* Charts / panels */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow);}
+.panel h3{margin:0 0 3px;font-size:14.5px;}
+.panel .sub{font-size:12px;color:var(--ink-soft);margin:0 0 14px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media (max-width:980px){.grid2{grid-template-columns:1fr;}}
+.chartbox{position:relative;height:240px;}
+.minitable{width:100%;border-collapse:collapse;font-size:12.5px;}
+.minitable th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:11px;padding:6px 8px;border-bottom:1px solid var(--line);}
+.minitable td{padding:6px 8px;border-bottom:1px solid var(--line);}
+.minitable tr:last-child td{border-bottom:none;}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(10,14,11,.45);display:none;align-items:flex-start;justify-content:center;padding:34px 16px;overflow-y:auto;z-index:50;}
+.overlay.active{display:flex;}
+.modal{background:var(--panel);border-radius:14px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,.28);border:1px solid var(--line);}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;padding:20px 24px 14px;border-bottom:1px solid var(--line);gap:12px;}
+.modal-head h2{margin:0;font-size:19px;font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:400;}
+.modal-head .idline{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+.modal-close{background:none;border:none;font-size:20px;color:var(--ink-soft);cursor:pointer;line-height:1;padding:4px;}
+.modal-body{padding:20px 24px 6px;max-height:70vh;overflow-y:auto;}
+.modal-foot{display:flex;justify-content:space-between;gap:10px;padding:16px 24px 22px;}
+
+.section-title{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;text-transform:none;color:var(--ink-soft);margin:22px 0 10px;padding-top:16px;border-top:1px solid var(--line);}
+.section-title:first-child{margin-top:0;padding-top:0;border-top:none;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+.fgrid.full{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field.span2{grid-column:1/-1;}
+.field label{font-size:12px;color:var(--ink-soft);font-weight:500;}
+.field input, .field select, .field textarea{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:7px;padding:8px 10px;font-size:13px;font-family:inherit;width:100%;}
+.field textarea{resize:vertical;min-height:56px;}
+.field .hint{font-size:11px;color:var(--ink-soft);}
+.field label .hint{font-weight:400;margin-left:4px;}
+.tagbox{display:flex;flex-wrap:wrap;gap:4px;align-items:center;border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:4px 6px;min-height:36px;cursor:text;}
+.tagbox:focus-within{border-color:var(--accent);}
+.tagbox .tags{display:contents;}
+.tagbox .tag{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;}
+.tagbox .tagx{border:none;background:transparent;color:var(--ink-soft);cursor:pointer;font-size:14px;line-height:1;padding:0 4px;border-radius:50%;}
+.tagbox .tagx:hover{color:var(--bad);}
+.field .tagbox input.taginput{border:none;background:transparent;padding:4px;flex:1;min-width:110px;width:auto;outline:none;font-size:13px;}
+.fieldlink{font-size:11.5px;font-weight:600;margin-left:6px;color:var(--accent);text-decoration:none;}
+.fieldlink:hover{text-decoration:underline;}
+.qbox{display:flex;flex-direction:column;gap:4px;}
+.qbox .qrow{display:flex;align-items:center;gap:6px;}
+.qbox .qyear{font-size:11px;color:var(--ink-soft);width:34px;}
+.qbox .qchip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+.qbox .qchip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+.scoreblock{border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px;background:var(--bg);}
+.scoreblock h4{margin:0 0 8px;font-size:12.5px;display:flex;justify-content:space-between;}
+.scoreblock h4 .tot{font-family:'IBM Plex Mono',monospace;color:var(--accent);}
+.scorerow{display:flex;flex-direction:column;gap:5px;padding:7px 0;font-size:12.5px;border-bottom:1px dashed var(--line);}
+.scorerow:last-child{border-bottom:none;}
+.scorerow>span{font-weight:500;color:var(--ink);}
+.scorerow select{width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);font-size:12px;color:var(--ink-soft);}
+.qual-legend{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;font-size:11.5px;}
+.qual-legend span{padding:4px 9px;border-radius:99px;background:var(--bg);border:1px solid var(--line);color:var(--ink-soft);}
+.totalscore{display:flex;justify-content:space-between;align-items:center;background:var(--accent-soft);border-radius:9px;padding:12px 14px;margin:14px 0 4px;}
+.totalscore .big{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:400;color:var(--accent);}
+.togglewrap{display:flex;align-items:center;gap:8px;margin:4px 0 0;}
+.collapsible{display:none;}
+.collapsible.open{display:block;}
+.warn{font-size:12px;color:var(--risk);background:var(--risk-soft);padding:8px 10px;border-radius:7px;margin:6px 0 0;}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:100;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+@media (max-width:760px){
+  .app{flex-direction:column;}
+  .sidebar{width:100%;flex:none;}
+  .sidebar-inner{height:auto;position:relative;flex-direction:row;align-items:center;padding:12px 14px;overflow-x:auto;}
+  .brand{padding:0 12px 0 0;}
+  .brand-sub{display:none;}
+  .nav{flex-direction:row;}
+  .sidebar-foot{display:none;}
+  .main{padding:18px 14px 50px;}
+  .fgrid{grid-template-columns:1fr;}
+  .grid2{grid-template-columns:1fr;}
+}
+.qtabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px;}
+.qtab{border:none;background:transparent;color:var(--ink-soft);font-size:12px;font-weight:600;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:inherit;}
+.qtab:hover{color:var(--ink);}
+.qtab.active{background:var(--accent);color:var(--accent-ink);}
+.ticket-link{font-size:11px;color:var(--accent);text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:2px;margin-top:2px;}
+.ticket-link:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+        <div class="sidebar-inner">
+        <div class="brand">
+      <div class="brand-mark"><svg class="brand-logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="12" fill="#3B5BDB"/><path d="M7 16.5V12M12 16.5V7.5M17 16.5v-6" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg> <span class="display">PMO Analytics Hub</span></div>
+      <div class="brand-sub">Реестр проектов + квалификация · демо</div>
+          </div>
+    <nav class="nav" id="navList"></nav>
+    <button class="btn-addyear" id="addYearBtn">＋ Добавить год</button>
+    <div class="sidebar-foot">
+      Демо · данные вымышлены и хранятся только в этом браузере.<br>
+      <a href="#" id="resetLink" style="color:inherit;text-decoration:underline;">Сбросить к исходным данным</a>
+    </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="demo-banner" role="note"><strong>Демо-версия.</strong> Все данные вымышлены, суммы иллюстративные, клиенты заменены отраслями. Изменения сохраняются только в этом браузере.</div>
+
+    <!-- PROJECTS 2026 -->
+    <section class="view active" id="view-pmodern">
+      <div class="pagehead">
+        <div>
+          <h1 id="modernTitle">Проекты 2026</h1>
+          <p>Клик по строке открывает карточку проекта — там же квалификация после ППМ.</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="a_cardFields">⚙ Изменить карточку</button>
+          <button class="btn btn-primary" id="a_new">＋ Новый проект</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="a_search" placeholder="Поиск: проект, клиент, проджект…">
+        <div class="qtabs" id="a_qtabs"></div>
+        <select id="a_client"><option value="">Клиент: все</option></select>
+        <select id="a_product"><option value="">Продукт: все</option></select>
+        <select id="a_pm"><option value="">Проджект: все</option></select>
+        <select id="a_qual"><option value="">Квалификация: все</option></select>
+        <select id="a_status"><option value="">Статус: все</option><option value="open">Открыт</option><option value="closed">Закрыт</option></select>
+        <span class="fcount" id="a_count"></span>
+      </div>
+
+      <div class="cardgrid" id="a_rows"></div>
+      <div class="empty" id="a_empty" style="display:none;">Ничего не найдено — попробуй изменить фильтры.</div>
+    </section>
+
+    <!-- ARCHIVE 2025 -->
+    <section class="view" id="view-p2025">
+      <div class="pagehead">
+        <div>
+          <h1>Архив 2025</h1>
+          <p>Квалификации по 29-балльной модели тогда ещё не было — здесь старая шкала: 5 параметров от 0 до 5 плюс удовлетворённость.</p>
+        </div>
+        <button class="btn btn-primary" id="b_new">＋ Добавить архивный проект</button>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="b_search" placeholder="Поиск: проект, клиент, проджект…">
+        <div class="qtabs" id="b_qtabs"></div>
+        <select id="b_client"><option value="">Клиент: все</option></select>
+        <select id="b_product"><option value="">Продукт: все</option></select>
+        <select id="b_pm"><option value="">Проджект: все</option></select>
+        <select id="b_status"><option value="">Статус: все</option><option value="open">Открыт</option><option value="closed">Закрыт</option></select>
+        <span class="fcount" id="b_count"></span>
+      </div>
+
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Проект</th><th>Клиент</th><th>Продукт</th><th>Проджект</th>
+              <th>Квартал</th><th>Цена</th><th>План/Факт маржа</th><th>Удовлетворённость</th><th>Статус</th>
+            </tr>
+          </thead>
+          <tbody id="b_rows"></tbody>
+        </table>
+        <div class="empty" id="b_empty" style="display:none;">Ничего не найдено — попробуй изменить фильтры.</div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS VIEW -->
+    <section class="view" id="view-analytics">
+      <div class="pagehead">
+        <div>
+          <h1>Аналитика</h1>
+          <p>Считается на лету по данным реестра: маржа, квалификация, продукты, форматы, выручка, нагрузка команды.</p>
+        </div>
+        <select id="aYear" class="btn btn-sm" style="padding:8px 12px;"></select>
+      </div>
+
+      <div class="stats" id="statTiles"></div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3>Маржа по кварталам</h3>
+          <p class="sub">План vs факт, среднее по проектам квартала</p>
+          <div class="chartbox"><canvas id="chartMargin"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Квалификация проектов по кварталам</h3>
+          <p class="sub">Распределение по квалификации (только оценённые проекты, 2026+)</p>
+          <div class="chartbox"><canvas id="chartQual"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h3>Проекты по продуктам</h3>
+            <p class="sub">Слева — распределение за выбранный квартал, справа — за весь год</p>
+          </div>
+          <select id="productQuarterSel" class="btn btn-sm" style="padding:6px 10px;"></select>
+        </div>
+        <div class="grid2">
+          <div class="chartbox"><canvas id="chartProductQuarter"></canvas></div>
+          <div class="chartbox"><canvas id="chartProductYear"></canvas></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3>Формат проведения</h3>
+          <p class="sub" id="fmtSub"></p>
+          <div class="chartbox"><canvas id="chartFormat"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Место проведения</h3>
+          <p class="sub" id="locSub"></p>
+          <div class="chartbox"><canvas id="chartLocation"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Количество участников</h3>
+        <p class="sub" id="partSub"></p>
+        <div class="chartbox"><canvas id="chartParticipants"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h3>Сравнение по годам</h3>
+        <p class="sub">Итоги по годам целиком и разбивка по одноимённым кварталам (напр. Q1 2025 vs Q1 2026 vs Q1 2027)</p>
+        <table class="minitable" id="yearCompareTable" style="margin-bottom:16px;"></table>
+        <div class="chartbox"><canvas id="chartYearCount"></canvas></div>
+      </div>
+
+      <div class="panel">
+        <h3>Стоимость проектов</h3>
+        <p class="sub">Средняя цена проекта — по годам и по одноимённым кварталам</p>
+        <div class="grid2">
+          <div class="chartbox"><canvas id="chartYearPrice"></canvas></div>
+          <div class="chartbox"><canvas id="chartYearPriceQuarter"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Выручка по клиентам</h3>
+        <p class="sub">Сумма «Цены проекта» по клиенту — по кварталам и за выбранный год целиком</p>
+        <table class="minitable" id="clientRevenueTable"></table>
+      </div>
+
+      <div class="panel">
+        <h3>Загрузка кураторов</h3>
+        <p class="sub">Количество проектов по кварталам</p>
+        <div class="chartbox"><canvas id="chartCurator"></canvas></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3>Нагрузка проджектов</h3>
+          <p class="sub">По выбранному году — количество проектов и средняя фактмаржа</p>
+          <table class="minitable" id="pmLoadTable"></table>
+        </div>
+        <div class="panel">
+          <h3>Загрузка фасилитаторов</h3>
+          <p class="sub">По выбранному году — количество проектов</p>
+          <table class="minitable" id="facLoadTable"></table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL: project card -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalTitle">Новый проект</h2>
+        <div class="idline" id="modalSub">Заполните поля старта проекта</div>
+      </div>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="section-title">Старт проекта</div>
+      <div class="fgrid">
+        <div class="field span2">
+          <label>Название проекта*</label>
+          <input type="text" id="f_name" placeholder="Клиент // краткое описание // номер">
+        </div>
+        <div class="field">
+          <label>ID проекта (номер 1С / КР / П26)*</label>
+          <input type="text" id="f_id" class="mono" placeholder="напр. PRJ-26-001">
+        </div>
+        <div class="field">
+          <label>Год</label>
+          <select id="f_year"></select>
+        </div>
+        <div class="field">
+          <label>Клиент</label>
+          <input type="text" id="f_client" list="clientList" placeholder="начни вводить — подскажем">
+        </div>
+        <div class="field">
+          <label>Продукт</label>
+          <select id="f_product"></select>
+          <input type="text" id="f_product_other" placeholder="Впиши новый продукт" style="display:none;margin-top:6px;">
+        </div>
+        <div class="field">
+          <label>Проджект <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_pm_box"></div><input type="hidden" id="f_pm">
+        </div>
+        <div class="field">
+          <label>Аккаунт <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_account_box"></div><input type="hidden" id="f_account">
+        </div>
+        <div class="field">
+          <label>Куратор <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_curator_box"></div><input type="hidden" id="f_curator">
+        </div>
+        <div class="field">
+          <label>Фасилитаторы <span class="hint">можно несколько</span></label>
+          <div class="tagbox" id="f_facilitators_box"></div><input type="hidden" id="f_facilitators">
+        </div>
+        <div class="field">
+          <label>Формат</label>
+          <select id="f_format">
+            <option value="">—</option>
+            <option>очно</option><option>онлайн</option><option>гибрид</option><option>асинхронный проект</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Кол-во участников</label>
+          <select id="f_participants">
+            <option value="">—</option>
+            <option>до 20</option><option>21-50</option><option>51-80</option><option>81-100</option><option>101-150</option><option>больше 150</option><option>асинхронно</option>
+          </select>
+        </div>
+        <div class="field span2">
+          <label>Место проведения</label>
+          <select id="f_location"></select>
+          <input type="text" id="f_location_other" placeholder="Впиши новое место проведения" style="display:none;margin-top:6px;">
+        </div>
+        <div class="field">
+          <label>Тикет (ссылка) <a class="fieldlink" id="f_ticket_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
+          <input type="text" id="f_ticket" placeholder="https://tracker.example.com/…">
+        </div>
+        <div class="field">
+          <label>Смета (файл) <a class="fieldlink" id="f_budgetFile_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
+          <input type="text" id="f_budgetFile">
+        </div>
+        <div class="field">
+          <label>Цена проекта, ₽</label>
+          <input type="text" id="f_price" class="mono">
+        </div>
+        <div class="field">
+          <label>План маржа, %</label>
+          <input type="text" id="f_marginPlan" class="mono">
+        </div>
+        <div class="field">
+          <label>Период проведения <span class="hint">можно несколько кварталов</span></label>
+          <div class="qbox" id="f_period_box"></div><input type="hidden" id="f_period">
+        </div>
+        <div class="field">
+          <label>Период закрытия</label>
+          <div class="qbox" id="f_periodClose_box"></div><input type="hidden" id="f_periodClose">
+        </div>
+        <div class="field">
+          <label>Статус проекта</label>
+          <select id="f_closed"><option value="false">Открыт</option><option value="true">Закрыт</option></select>
+        </div>
+        <div class="field">
+          <label>Фактмаржа, %</label>
+          <input type="text" id="f_marginFact" class="mono">
+        </div>
+      </div>
+      <div class="warn" id="idWarn" style="display:none;"></div>
+
+      <div class="section-title" style="justify-content:space-between;">
+        <span id="qualSectionLabel">Квалификация проекта (после ППМ)</span>
+        <button class="btn btn-ghost btn-sm" id="toggleQual" type="button">Развернуть ▾</button>
+      </div>
+      <div class="collapsible" id="qualBlock">
+
+        <!-- Modern 2026+ qualification -->
+        <div id="qualModern">
+          <div class="fgrid">
+            <div class="field span2">
+              <label>Формат артефакта</label>
+              <input type="text" id="q_artifactFormat" placeholder="Методичка, презентация, карточки…">
+            </div>
+            <div class="field">
+              <label>Ссылка на заметки PPM</label>
+              <input type="text" id="q_ppmLink">
+            </div>
+          </div>
+
+          <div class="qual-legend">
+            <span>0–10 нежелательный</span><span>11–17 рискованный</span><span>18–23 рабочий</span><span>24–29 удачный</span>
+          </div>
+
+          <div class="scoreblock">
+            <h4>Бизнес-ценность <span class="tot" id="tot_biz">0</span></h4>
+            <div class="scorerow"><span>Маржа</span><select data-blk="biz" data-k="margin">
+              <option value="0">0 — ниже плановой маржи</option>
+              <option value="1">1 — сохранили плановую маржу</option>
+              <option value="2">2 — преумножили плановую маржу</option>
+            </select></div>
+            <div class="scorerow"><span>Потенциал отношений с клиентом</span><select data-blk="biz" data-k="relPotential">
+              <option value="0">0 — провели, и бог с ним</option>
+              <option value="1">1 — провели, клиент в кайфе</option>
+              <option value="2">2 — клиент проявил интерес к следующим проектам</option>
+            </select></div>
+            <div class="scorerow"><span>PR-эффект</span><select data-blk="biz" data-k="pr">
+              <option value="0">0 — эффекта нет</option>
+              <option value="1">1 — планируем кейс / клиент публично рассказал о нас</option>
+            </select></div>
+            <div class="scorerow"><span>Ценность для внутренней стратегии</span><select data-blk="biz" data-k="strategy">
+              <option value="0">0 — не соответствует нашему продуктовому портфелю</option>
+              <option value="1">1 — соответствует нашему продуктовому портфелю</option>
+            </select></div>
+          </div>
+
+          <div class="scoreblock">
+            <h4>Клиент <span class="tot" id="tot_client">0</span></h4>
+            <div class="scorerow"><span>Доверие и сотворчество</span><select data-blk="client" data-k="trust">
+              <option value="0">0 — гиперконтроль и микроменеджмент, сложное согласование</option>
+              <option value="1">1 — всё ровно</option>
+              <option value="2">2 — полное доверие</option>
+            </select></div>
+            <div class="scorerow"><span>Тайминги и договорённости</span><select data-blk="client" data-k="timing"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>WOW-эффект</span><select data-blk="client" data-k="wow">
+              <option value="0">0 — отрицательный отклик или ничего не запомнилось</option>
+              <option value="1">1 — всё хорошо, ровно</option>
+              <option value="2">2 — клиент привёл конкретный пример, что было круто</option>
+            </select></div>
+            <div class="scorerow"><span>Удовлетворённость командой</span><select data-blk="client" data-k="satisfaction"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+          </div>
+
+          <div class="scoreblock">
+            <h4>Команда <span class="tot" id="tot_team">0</span></h4>
+            <div class="scorerow"><span>Тайминги — куратор</span><select data-blk="team" data-k="timingCurator">
+              <option value="0">0 — нарушил дедлайн без предупреждения / прислал материалы в день Х</option>
+              <option value="1">1 — уложился в срок, оставил запас другим подрядчикам</option>
+              <option value="2">2 — прислал всё заранее, быстро реагировал, был проактивен</option>
+            </select></div>
+            <div class="scorerow"><span>Тайминги — остальные</span><select data-blk="team" data-k="timingOthers">
+              <option value="0">0 — опоздание повлияло на имидж / серьёзно задержало подготовку</option>
+              <option value="1">1 — сделано в срок или с задержкой, о которой предупредили</option>
+              <option value="2">2 — проактивно включался в подготовку и проведение</option>
+            </select></div>
+            <div class="scorerow"><span>Команда не перегружена</span><select data-blk="team" data-k="notOverloaded">
+              <option value="0">0 — перегружена</option>
+              <option value="1">1 — не перегружена</option>
+            </select></div>
+            <div class="scorerow"><span>Доверие, уважение и сотворчество</span><select data-blk="team" data-k="trust"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>Развитие и эксперименты</span><select data-blk="team" data-k="growth">
+              <option value="0">0 — базовый проект</option>
+              <option value="1">1 — попробовали новое, развили компетенции</option>
+            </select></div>
+          </div>
+
+          <div class="scoreblock">
+            <h4>Менеджмент <span class="tot" id="tot_mgmt">0</span></h4>
+            <div class="scorerow"><span>Нагрузка проджекта</span><select data-blk="mgmt" data-k="pmLoad">
+              <option value="0">0 — много задач, компенсирует за подрядчиков, жуткий график</option>
+              <option value="1">1 — стабильно по нагрузке</option>
+              <option value="2">2 — всё на рельсах, минимальная вовлечённость</option>
+            </select></div>
+            <div class="scorerow"><span>Логистика и формат</span><select data-blk="mgmt" data-k="logistics">
+              <option value="0">0 — 8ч в онлайне / сложная логистика / не хватает сметы на комфорт</option>
+              <option value="1">1 — всё стандартно и ровно</option>
+              <option value="2">2 — экстра-комфортные условия для команды</option>
+            </select></div>
+            <div class="scorerow"><span>Реалистичность сметы</span><select data-blk="mgmt" data-k="budgetRealism"><option value="0">0</option><option value="1">1</option><option value="2">2</option></select></div>
+            <div class="scorerow"><span>Качество передачи проекта аккаунтом</span><select data-blk="mgmt" data-k="handoff">
+              <option value="0">0 — в подготовке всплыли косяки передачи</option>
+              <option value="1">1 — косяков передачи не было</option>
+            </select></div>
+          </div>
+
+          <div class="totalscore">
+            <div>
+              <div style="font-size:12px;color:var(--ink-soft);">Итоговый балл (из 29) и квалификация</div>
+              <select id="f_category" style="margin-top:6px;">
+                <option value="">— выбрать вручную —</option>
+                <option value="Удачный">Удачный</option>
+                <option value="Рабочий">Рабочий</option>
+                <option value="Рискованный">Рискованный</option>
+                <option value="Нежелательный">Нежелательный</option>
+                <option value="Пока не оценено">Пока не оценено</option>
+              </select>
+            </div>
+            <div class="big" id="totalScoreVal">0</div>
+          </div>
+          <p class="hint" id="categoryHint" style="margin:2px 0 0;"></p>
+
+          <div class="fgrid full" style="margin-top:14px;">
+            <div class="field"><label>Ключевые сложности</label><textarea id="q_difficulties"></textarea></div>
+            <div class="field"><label>Лучшие находки</label><textarea id="q_findings"></textarea></div>
+            <div class="field"><label>ОС по артефакту</label><textarea id="q_artifactFeedback"></textarea></div>
+            <div class="field"><label>Что изменить в будущем</label><textarea id="q_futureChanges"></textarea></div>
+          </div>
+        </div>
+
+        <!-- Legacy 2025 qualification -->
+        <div id="qualLegacy" style="display:none;">
+          <p class="hint" style="margin:0 0 12px;">В 2025 году считали только удовлетворённость клиента — единого балла и категории тогда не было.</p>
+          <div class="scoreblock">
+            <div class="scorerow"><span>Удовлетворённость, %</span><input type="text" id="lg_satisfaction" class="mono" style="width:100%;" placeholder="0–100"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="btnDelete" style="display:none;">Удалить проект</button>
+      <div style="margin-left:auto;display:flex;gap:10px;">
+        <button class="btn" id="btnCancel">Отмена</button>
+        <button class="btn btn-primary" id="btnSave">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: card field constructor -->
+<div class="overlay" id="cfOverlay">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <div>
+        <h2 id="cfModalTitle">Карточка проекта</h2>
+        <div class="idline">Какие поля показывать на карточке и в каком порядке — настройка своя для этого года.</div>
+      </div>
+      <button class="modal-close" id="cfModalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-title">Название проекта всегда на карточке первым</div>
+      <div id="cfList"></div>
+      <div class="section-title">Добавить поле</div>
+      <div class="cf-add">
+        <input type="text" id="cf_label" placeholder="Название (напр. Клиент)">
+        <input type="text" id="cf_key" placeholder="Описание — техническое имя поля (напр. client)">
+        <button class="btn btn-primary" id="cf_addBtn" type="button">＋ Добавить</button>
+      </div>
+      <p class="cf-hint">Имя поля — это как оно называется в карточке проекта (price, client, product, pm, account, curator, facilitators, format, participants, location, marginPlan, marginFact, period, periodClose, closed, ticket, budgetFile, category).</p>
+    </div>
+    <div class="modal-foot">
+      <div style="margin-left:auto;">
+        <button class="btn btn-primary" id="cfModalDone">Готово</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<datalist id="clientList"></datalist>
+<datalist id="pmList"></datalist>
+<datalist id="accList"></datalist>
+<datalist id="curList"></datalist>
+<datalist id="facList"></datalist>
+
+<script>
+const SEED_DATA = 
+[{"id":"PRJ-25-001","year":2025,"name":"IT-компания // Сессия по приоритизации инициатив, февраль 2025","client":"IT-компания","product":"Продуктовая стратегия","folder":"IT-компания // Сессия по приоритизации инициатив","budgetFile":"Смета_PRJ-25-001.xlsx","pm":"Аня","account":"","curator":"Антон","facilitators":"","format":"очно","participants":"до 20","location":"на сторонней площадке в городе компании","price":900000.0,"marginPlan":72.0,"marginFact":70.0,"period":"Q1 2025","periodClose":"Q1 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":3.0,"management":4.0,"margin":4.0,"satisfaction":75.0}},{"id":"PRJ-25-002","year":2025,"name":"Медиа // Деловая игра для команды, февраль 2025","client":"Медиа","product":"Деловые игры","folder":"Медиа // Деловая игра для команды","budgetFile":"Смета_PRJ-25-002.xlsx","pm":"Аня","account":"","curator":"Данил","facilitators":"","format":"очно","participants":"21-50","location":"командировка внутри страны","price":1175000.0,"marginPlan":75.0,"marginFact":78.0,"period":"Q1 2025","periodClose":"Q1 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":2.0,"suppliers":4.0,"management":5.0,"margin":5.0,"satisfaction":65.0}},{"id":"PRJ-25-003","year":2025,"name":"Страхование // Сессия по приоритизации инициатив, март 2025","client":"Страхование","product":"Продуктовая стратегия","folder":"Страхование // Сессия по приоритизации инициатив","budgetFile":"Смета_PRJ-25-003.xlsx","pm":"Юля","account":"","curator":"Павел","facilitators":"","format":"очно","participants":"до 20","location":"на сторонней площадке в городе компании","price":785000.0,"marginPlan":76.0,"marginFact":69.0,"period":"Q1 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":5.0,"management":5.0,"margin":3.0,"satisfaction":55.0}},{"id":"PRJ-25-004","year":2025,"name":"Энергетика // Сессия по приоритизации инициатив, январь 2025","client":"Энергетика","product":"Продуктовая стратегия","folder":"Энергетика // Сессия по приоритизации инициатив","budgetFile":"Смета_PRJ-25-004.xlsx","pm":"Маша","account":"","curator":"Елизавета","facilitators":"Павел, Илья, Алина","format":"очно","participants":"до 20","location":"на сторонней площадке в городе компании","price":510000.0,"marginPlan":68.0,"marginFact":57.0,"period":"Q1 2025","periodClose":"Q1 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":4.0,"management":5.0,"margin":1.0,"satisfaction":90.0}},{"id":"PRJ-25-005","year":2025,"name":"Девелопмент // Воркшоп по продуктовой стратегии, январь 2025","client":"Девелопмент","product":"Продуктовая стратегия","folder":"Девелопмент // Воркшоп по продуктовой стратегии","budgetFile":"Смета_PRJ-25-005.xlsx","pm":"Юля, Ксюша","account":"","curator":"Елизавета","facilitators":"","format":"асинхронный проект","participants":"асинхронно","location":"асинхронно","price":540000.0,"marginPlan":74.0,"marginFact":78.0,"period":"Q1 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":3.0,"management":5.0,"margin":5.0,"satisfaction":75.0}},{"id":"PRJ-25-006","year":2025,"name":"IT-компания // Сессия генерации идей, февраль 2025","client":"IT-компания","product":"Генерация идей","folder":"IT-компания // Сессия генерации идей","budgetFile":"Смета_PRJ-25-006.xlsx","pm":"Юля","account":"","curator":"Данил","facilitators":"","format":"очно","participants":"101-150","location":"на сторонней площадке в городе компании","price":5555000.0,"marginPlan":76.0,"marginFact":75.0,"period":"Q1 2025","periodClose":"Q1 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":4.0,"management":4.0,"margin":5.0,"satisfaction":85.0}},{"id":"PRJ-25-007","year":2025,"name":"Страхование // Разработка стратегии направления, апрель 2025","client":"Страхование","product":"Бизнес-стратегия","folder":"Страхование // Разработка стратегии направления","budgetFile":"Смета_PRJ-25-007.xlsx","pm":"Ксюша","account":"Алёна","curator":"Данил","facilitators":"Ирина, Соня","format":"гибрид","participants":"до 20","location":"в офисе клиента","price":470000.0,"marginPlan":76.0,"marginFact":62.0,"period":"Q2 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":3.0,"management":3.0,"margin":2.0,"satisfaction":80.0}},{"id":"PRJ-25-008","year":2025,"name":"Медиа // Обучающая программа для руководителей, апрель 2025","client":"Медиа","product":"Образовательные программы","folder":"Медиа // Обучающая программа для руководителей","budgetFile":"Смета_PRJ-25-008.xlsx","pm":"Аня","account":"","curator":"Елизавета","facilitators":"","format":"очно","participants":"21-50","location":"на сторонней площадке в городе компании","price":965000.0,"marginPlan":72.0,"marginFact":65.0,"period":"Q2 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":3.0,"management":4.0,"margin":3.0,"satisfaction":80.0}},{"id":"PRJ-25-009","year":2025,"name":"IT-компания // Программа развития навыков команды, апрель 2025","client":"IT-компания","product":"Образовательные программы","folder":"IT-компания // Программа развития навыков команды","budgetFile":"Смета_PRJ-25-009.xlsx","pm":"Маша","account":"","curator":"Елена","facilitators":"","format":"очно","participants":"до 20","location":"в офисе клиента","price":600000.0,"marginPlan":70.0,"marginFact":61.0,"period":"Q2 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":5.0,"management":5.0,"margin":2.0,"satisfaction":90.0}},{"id":"PRJ-25-010","year":2025,"name":"Логистика // Коммуникационная стратегия бренда работодателя, май 2025","client":"Логистика","product":"Коммуникационная стратегия","folder":"Логистика // Коммуникационная стратегия бренда работодателя","budgetFile":"Смета_PRJ-25-010.xlsx","pm":"Ксюша","account":"","curator":"Василий, Анастасия","facilitators":"","format":"онлайн","participants":"до 20","location":"онлайн","price":430000.0,"marginPlan":64.0,"marginFact":66.0,"period":"Q2 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":4.0,"management":5.0,"margin":3.0,"satisfaction":80.0}},{"id":"PRJ-25-011","year":2025,"name":"Фармацевтика // Сессия генерации идей, апрель 2025","client":"Фармацевтика","product":"Генерация идей","folder":"Фармацевтика // Сессия генерации идей","budgetFile":"Смета_PRJ-25-011.xlsx","pm":"Аня","account":"","curator":"Андрей, Антон","facilitators":"Яна","format":"гибрид","participants":"81-100","location":"на сторонней площадке в городе компании","price":3865000.0,"marginPlan":66.0,"marginFact":73.0,"period":"Q2 2025","periodClose":"Q2 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":3.0,"management":5.0,"margin":4.0,"satisfaction":70.0}},{"id":"PRJ-25-012","year":2025,"name":"Телеком // Сессия по приоритизации инициатив, апрель 2025","client":"Телеком","product":"Продуктовая стратегия","folder":"Телеком // Сессия по приоритизации инициатив","budgetFile":"Смета_PRJ-25-012.xlsx","pm":"Аня","account":"","curator":"Елизавета, Павел","facilitators":"","format":"очно","participants":"51-80","location":"в офисе исполнителя","price":1565000.0,"marginPlan":61.0,"marginFact":69.0,"period":"Q2 2025","periodClose":"Q3 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":4.0,"management":3.0,"margin":3.0,"satisfaction":75.0}},{"id":"PRJ-25-013","year":2025,"name":"Образование // Сессия генерации идей, август 2025","client":"Образование","product":"Генерация идей","folder":"Образование // Сессия генерации идей","budgetFile":"Смета_PRJ-25-013.xlsx","pm":"Ксюша","account":"","curator":"Антон","facilitators":"","format":"онлайн","participants":"21-50","location":"онлайн","price":1205000.0,"marginPlan":66.0,"marginFact":62.0,"period":"Q3 2025","periodClose":"Q3 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":3.0,"management":4.0,"margin":2.0,"satisfaction":80.0}},{"id":"PRJ-25-014","year":2025,"name":"Банк // Стратегическая сессия руководителей, июль 2025","client":"Банк","product":"Бизнес-стратегия","folder":"Банк // Стратегическая сессия руководителей","budgetFile":"Смета_PRJ-25-014.xlsx","pm":"Ксюша, Аня","account":"","curator":"Анастасия","facilitators":"","format":"очно","participants":"21-50","location":"на сторонней площадке в городе компании","price":975000.0,"marginPlan":64.0,"marginFact":66.0,"period":"Q3 2025","periodClose":"Q3 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":4.0,"management":4.0,"margin":3.0,"satisfaction":75.0}},{"id":"PRJ-25-015","year":2025,"name":"Телеком // Цикл мастер-классов для сотрудников, июль 2025","client":"Телеком","product":"Образовательные программы","folder":"Телеком // Цикл мастер-классов для сотрудников","budgetFile":"Смета_PRJ-25-015.xlsx","pm":"Маша","account":"","curator":"Данил","facilitators":"Антон, Настя","format":"очно","participants":"21-50","location":"в офисе клиента","price":1580000.0,"marginPlan":67.0,"marginFact":67.0,"period":"Q3 2025","periodClose":"Q3 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":5.0,"suppliers":4.0,"management":4.0,"margin":3.0,"satisfaction":95.0}},{"id":"PRJ-25-016","year":2025,"name":"Ритейл // Внутренний хакатон, сентябрь 2025","client":"Ритейл","product":"Хакатоны","folder":"Ритейл // Внутренний хакатон","budgetFile":"Смета_PRJ-25-016.xlsx","pm":"Аня","account":"","curator":"Антон","facilitators":"Антон, Марина, Яна","format":"очно","participants":"21-50","location":"в офисе клиента","price":1150000.0,"marginPlan":66.0,"marginFact":71.0,"period":"Q3 2025","periodClose":"Q3 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":5.0,"suppliers":4.0,"management":3.0,"margin":4.0,"satisfaction":95.0}},{"id":"PRJ-25-017","year":2025,"name":"IT-компания // Программа развития навыков команды, август 2025","client":"IT-компания","product":"Образовательные программы","folder":"IT-компания // Программа развития навыков команды","budgetFile":"Смета_PRJ-25-017.xlsx","pm":"Маша","account":"","curator":"Елена","facilitators":"Илья, Анастасия","format":"очно","participants":"21-50","location":"в офисе клиента","price":1840000.0,"marginPlan":72.0,"marginFact":82.0,"period":"Q3 2025","periodClose":"Q3 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":2.0,"management":4.0,"margin":5.0,"satisfaction":75.0}},{"id":"PRJ-25-018","year":2025,"name":"FMCG // Воркшоп по кросс-функциональному взаимодействию, октябрь 2025","client":"FMCG","product":"Кросс-функциональное взаимодействие","folder":"FMCG // Воркшоп по кросс-функциональному взаимодействию","budgetFile":"Смета_PRJ-25-018.xlsx","pm":"Юля","account":"","curator":"Василий","facilitators":"","format":"гибрид","participants":"51-80","location":"в офисе клиента","price":1875000.0,"marginPlan":72.0,"marginFact":64.0,"period":"Q4 2025","periodClose":"Q1 2026","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":5.0,"management":3.0,"margin":2.0,"satisfaction":70.0}},{"id":"PRJ-25-019","year":2025,"name":"Образование // Сессия генерации идей, октябрь 2025","client":"Образование","product":"Генерация идей","folder":"Образование // Сессия генерации идей","budgetFile":"Смета_PRJ-25-019.xlsx","pm":"Маша","account":"","curator":"Данил, Антон","facilitators":"","format":"очно","participants":"до 20","location":"командировка внутри страны","price":555000.0,"marginPlan":71.0,"marginFact":65.0,"period":"Q4 2025","periodClose":"Q1 2026","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":5.0,"management":3.0,"margin":3.0,"satisfaction":80.0}},{"id":"PRJ-25-020","year":2025,"name":"Телеком // Воркшоп по продуктовой стратегии, ноябрь 2025","client":"Телеком","product":"Продуктовая стратегия","folder":"Телеком // Воркшоп по продуктовой стратегии","budgetFile":"Смета_PRJ-25-020.xlsx","pm":"Аня","account":"","curator":"Данил, Анастасия","facilitators":"","format":"асинхронный проект","participants":"асинхронно","location":"асинхронно","price":310000.0,"marginPlan":65.0,"marginFact":69.0,"period":"Q4 2025","periodClose":"Q4 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":5.0,"suppliers":5.0,"management":4.0,"margin":3.0,"satisfaction":95.0}},{"id":"PRJ-25-021","year":2025,"name":"FMCG // Внутренний хакатон, октябрь 2025","client":"FMCG","product":"Хакатоны","folder":"FMCG // Внутренний хакатон","budgetFile":"Смета_PRJ-25-021.xlsx","pm":"Ксюша","account":"Катя","curator":"Данил","facilitators":"","format":"очно","participants":"101-150","location":"командировка внутри страны","price":6935000.0,"marginPlan":68.0,"marginFact":69.0,"period":"Q4 2025","periodClose":"Q1 2026","closed":true,"category":null,"qual":null,"legacy":{"customer":3.0,"suppliers":4.0,"management":3.0,"margin":3.0,"satisfaction":70.0}},{"id":"PRJ-25-022","year":2025,"name":"Промышленность // Коммуникационная стратегия бренда работодателя, декабрь 2025","client":"Промышленность","product":"Коммуникационная стратегия","folder":"Промышленность // Коммуникационная стратегия бренда работодателя","budgetFile":"Смета_PRJ-25-022.xlsx","pm":"Маша","account":"Катя","curator":"Павел","facilitators":"","format":"очно","participants":"больше 150","location":"на сторонней площадке в городе компании","price":8565000.0,"marginPlan":62.0,"marginFact":62.0,"period":"Q4 2025","periodClose":"Q4 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":5.0,"suppliers":4.0,"management":4.0,"margin":2.0,"satisfaction":95.0}},{"id":"PRJ-25-023","year":2025,"name":"Фармацевтика // Интенсив по генерации идей для продукта, октябрь 2025","client":"Фармацевтика","product":"Генерация идей","folder":"Фармацевтика // Интенсив по генерации идей для продукта","budgetFile":"Смета_PRJ-25-023.xlsx","pm":"Аня","account":"","curator":"Антон","facilitators":"","format":"гибрид","participants":"51-80","location":"в офисе клиента","price":3485000.0,"marginPlan":71.0,"marginFact":67.0,"period":"Q4 2025","periodClose":"Q1 2026","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":4.0,"management":4.0,"margin":3.0,"satisfaction":75.0}},{"id":"PRJ-25-024","year":2025,"name":"FMCG // Цикл мастер-классов для сотрудников, декабрь 2025","client":"FMCG","product":"Образовательные программы","folder":"FMCG // Цикл мастер-классов для сотрудников","budgetFile":"Смета_PRJ-25-024.xlsx","pm":"Аня, Ксюша","account":"Стёпа","curator":"Данил","facilitators":"","format":"очно","participants":"21-50","location":"на сторонней площадке в городе компании","price":410000.0,"marginPlan":72.0,"marginFact":75.0,"period":"Q4 2025","periodClose":"Q4 2025","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":4.0,"management":4.0,"margin":5.0,"satisfaction":75.0}},{"id":"PRJ-25-025","year":2025,"name":"IT-компания // Обучающая программа для руководителей, декабрь 2025","client":"IT-компания","product":"Образовательные программы","folder":"IT-компания // Обучающая программа для руководителей","budgetFile":"Смета_PRJ-25-025.xlsx","pm":"Света","account":"","curator":"Анастасия","facilitators":"Ольга, Марина","format":"онлайн","participants":"до 20","location":"онлайн","price":670000.0,"marginPlan":70.0,"marginFact":65.0,"period":"Q4 2025","periodClose":"Q1 2026","closed":true,"category":null,"qual":null,"legacy":{"customer":4.0,"suppliers":2.0,"management":5.0,"margin":3.0,"satisfaction":80.0}},{"id":"PRJ-26-001","year":2026,"name":"Энергетика // Цикл мастер-классов для сотрудников, январь 2026","client":"Энергетика","product":"Образовательные программы","folder":"Энергетика // Цикл мастер-классов для сотрудников","budgetFile":"Смета_PRJ-26-001.xlsx","pm":"Маша","account":"","curator":"Василий","facilitators":"","format":"очно","participants":"21-50","location":"в офисе клиента","price":515000.0,"marginPlan":74.0,"marginFact":72.0,"period":"Q1 2026","periodClose":"Q1 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Итоговая доска, Методичка, Карточки, Таблица с оцифровкой","biz":{"margin":1,"relPotential":1,"pr":1,"strategy":1,"total":4},"client":{"trust":2,"timing":1,"wow":2,"satisfaction":1,"total":6},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":2,"growth":1,"total":6},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":2,"handoff":1,"total":5},"totalScore":21,"difficulties":"Небольшие правки по материалам в последний день, уложились в срок.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Клиент положительно оценил итоговые материалы и попросил формат для других команд.","futureChanges":"Заранее договариваться с клиентом о формате обратной связи участников.","ppmLink":"https://example.com/ppm/PRJ-26-001"},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-001"},{"id":"PRJ-26-002","year":2026,"name":"Логистика // Обучающая программа для руководителей, февраль 2026","client":"Логистика","product":"Образовательные программы","folder":"Логистика // Обучающая программа для руководителей","budgetFile":"Смета_PRJ-26-002.xlsx","pm":"Ксюша","account":"","curator":"Василий","facilitators":"","format":"гибрид","participants":"до 20","location":"на сторонней площадке в городе компании","price":515000.0,"marginPlan":71.0,"marginFact":71.0,"period":"Q1 2026","periodClose":"Q1 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Методичка, Таблица с оцифровкой, Карточки","biz":{"margin":2,"relPotential":1,"pr":1,"strategy":0,"total":4},"client":{"trust":1,"timing":1,"wow":2,"satisfaction":2,"total":6},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":1,"growth":1,"total":5},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":2,"handoff":1,"total":5},"totalScore":20,"difficulties":"Единственная сложность — плотный график клиента, решили ранним согласованием слотов.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Добавить промежуточный синк по бюджету на середине подготовки.","ppmLink":"https://example.com/ppm/PRJ-26-002"},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-002"},{"id":"PRJ-26-003","year":2026,"name":"Образование // Стратегическая сессия руководителей, февраль 2026","client":"Образование","product":"Бизнес-стратегия","folder":"Образование // Стратегическая сессия руководителей","budgetFile":"Смета_PRJ-26-003.xlsx","pm":"Ксюша","account":"","curator":"Анастасия","facilitators":"Александра","format":"очно","participants":"51-80","location":"командировка внутри страны","price":3940000.0,"marginPlan":61.0,"marginFact":67.0,"period":"Q1 2026","periodClose":"Q1 2026","closed":true,"category":"Рискованный","qual":{"artifactFormat":"Методичка, Итоговая доска","biz":{"margin":2,"relPotential":1,"pr":0,"strategy":0,"total":3},"client":{"trust":1,"timing":0,"wow":0,"satisfaction":1,"total":2},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":0,"trust":1,"growth":0,"total":3},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":1,"handoff":0,"total":3},"totalScore":11,"difficulties":"Расходы на площадку и логистику выросли относительно сметы.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Клиент положительно оценил итоговые материалы и попросил формат для других команд.","futureChanges":"Добавить промежуточный синк по бюджету на середине подготовки.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-003"},{"id":"PRJ-26-004","year":2026,"name":"FMCG // Цикл мастер-классов для сотрудников, март 2026","client":"FMCG","product":"Образовательные программы","folder":"FMCG // Цикл мастер-классов для сотрудников","budgetFile":"Смета_PRJ-26-004.xlsx","pm":"Маша","account":"","curator":"Андрей, Данил","facilitators":"","format":"онлайн","participants":"до 20","location":"онлайн","price":395000.0,"marginPlan":73.0,"marginFact":78.0,"period":"Q1 2026","periodClose":"Q1 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Итоговая доска, Карточки, Презентация программы","biz":{"margin":2,"relPotential":1,"pr":1,"strategy":0,"total":4},"client":{"trust":2,"timing":2,"wow":1,"satisfaction":1,"total":6},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":2,"growth":1,"total":6},"mgmt":{"pmLoad":1,"logistics":2,"budgetRealism":1,"handoff":1,"total":5},"totalScore":21,"difficulties":"Небольшие правки по материалам в последний день, уложились в срок.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Добавить промежуточный синк по бюджету на середине подготовки.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-004"},{"id":"PRJ-26-005","year":2026,"name":"Медиа // Коммуникационная стратегия бренда работодателя, январь 2026","client":"Медиа","product":"Коммуникационная стратегия","folder":"Медиа // Коммуникационная стратегия бренда работодателя","budgetFile":"Смета_PRJ-26-005.xlsx","pm":"Ксюша","account":"","curator":"Антон, Данил","facilitators":"Павел, Яна, Антон","format":"очно","participants":"до 20","location":"в офисе исполнителя","price":175000.0,"marginPlan":70.0,"marginFact":65.0,"period":"Q1 2026","periodClose":"Q1 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Методичка, Карточки, Итоговая доска","biz":{"margin":1,"relPotential":1,"pr":1,"strategy":1,"total":4},"client":{"trust":2,"timing":1,"wow":1,"satisfaction":1,"total":5},"team":{"timingCurator":1,"timingOthers":2,"notOverloaded":1,"trust":2,"growth":0,"total":6},"mgmt":{"pmLoad":2,"logistics":1,"budgetRealism":1,"handoff":0,"total":4},"totalScore":19,"difficulties":"Небольшие правки по материалам в последний день, уложились в срок.","findings":"Договорённости, зафиксированные письменно на старте, снизили число правок.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Заранее договариваться с клиентом о формате обратной связи участников.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-005"},{"id":"PRJ-26-006","year":2026,"name":"Фармацевтика // Программа развития навыков команды, январь 2026","client":"Фармацевтика","product":"Образовательные программы","folder":"Фармацевтика // Программа развития навыков команды","budgetFile":"Смета_PRJ-26-006.xlsx","pm":"Ксюша","account":"","curator":"Данил","facilitators":"","format":"гибрид","participants":"21-50","location":"в офисе клиента","price":1830000.0,"marginPlan":74.0,"marginFact":69.0,"period":"Q1 2026","periodClose":"Q1 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Методичка, Карточки, Таблица с оцифровкой, Итоговая доска","biz":{"margin":1,"relPotential":2,"pr":0,"strategy":1,"total":4},"client":{"trust":1,"timing":2,"wow":2,"satisfaction":1,"total":6},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":1,"growth":1,"total":5},"mgmt":{"pmLoad":2,"logistics":1,"budgetRealism":1,"handoff":1,"total":5},"totalScore":20,"difficulties":"Небольшие правки по материалам в последний день, уложились в срок.","findings":"Договорённости, зафиксированные письменно на старте, снизили число правок.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Заранее договариваться с клиентом о формате обратной связи участников.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-006"},{"id":"PRJ-26-007","year":2026,"name":"Промышленность // Сессия по приоритизации инициатив, май 2026","client":"Промышленность","product":"Продуктовая стратегия","folder":"Промышленность // Сессия по приоритизации инициатив","budgetFile":"Смета_PRJ-26-007.xlsx","pm":"Аня","account":"Алёна","curator":"Данил, Евдокия","facilitators":"","format":"очно","participants":"до 20","location":"в офисе клиента","price":525000.0,"marginPlan":63.0,"marginFact":null,"period":"Q2 2026","periodClose":"на стопе","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-007"},{"id":"PRJ-26-008","year":2026,"name":"Фармацевтика // Интенсив по генерации идей для продукта, июнь 2026","client":"Фармацевтика","product":"Генерация идей","folder":"Фармацевтика // Интенсив по генерации идей для продукта","budgetFile":"Смета_PRJ-26-008.xlsx","pm":"Ксюша","account":"","curator":"Данил, Андрей","facilitators":"","format":"онлайн","participants":"101-150","location":"онлайн","price":7840000.0,"marginPlan":75.0,"marginFact":77.0,"period":"Q2 2026","periodClose":"Q2 2026","closed":true,"category":"Удачный","qual":{"artifactFormat":"Таблица с оцифровкой, Итоговая доска","biz":{"margin":2,"relPotential":2,"pr":1,"strategy":1,"total":6},"client":{"trust":1,"timing":2,"wow":2,"satisfaction":2,"total":7},"team":{"timingCurator":2,"timingOthers":2,"notOverloaded":1,"trust":2,"growth":1,"total":8},"mgmt":{"pmLoad":2,"logistics":1,"budgetRealism":2,"handoff":1,"total":6},"totalScore":27,"difficulties":"Существенных сложностей не было, работали по плану.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Добавить промежуточный синк по бюджету на середине подготовки.","ppmLink":"https://example.com/ppm/PRJ-26-008"},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-008"},{"id":"PRJ-26-009","year":2026,"name":"Ритейл // Цикл мастер-классов для сотрудников, апрель 2026","client":"Ритейл","product":"Образовательные программы","folder":"Ритейл // Цикл мастер-классов для сотрудников","budgetFile":"Смета_PRJ-26-009.xlsx","pm":"Света","account":"","curator":"Василий","facilitators":"","format":"очно","participants":"21-50","location":"на сторонней площадке в городе компании","price":2290000.0,"marginPlan":74.0,"marginFact":77.0,"period":"Q2 2026","periodClose":"Q2 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Таблица с оцифровкой, Методичка, Карточки","biz":{"margin":2,"relPotential":1,"pr":1,"strategy":1,"total":5},"client":{"trust":1,"timing":1,"wow":1,"satisfaction":2,"total":5},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":2,"growth":0,"total":5},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":2,"handoff":1,"total":5},"totalScore":20,"difficulties":"Существенных сложностей не было, работали по плану.","findings":"Раннее подключение аккаунта к подготовке упростило согласование ожиданий.","artifactFeedback":"Клиент попросил доработать структуру итогового документа.","futureChanges":"Добавить промежуточный синк по бюджету на середине подготовки.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-009"},{"id":"PRJ-26-010","year":2026,"name":"Логистика // Обучающая программа для руководителей, апрель 2026","client":"Логистика","product":"Образовательные программы","folder":"Логистика // Обучающая программа для руководителей","budgetFile":"Смета_PRJ-26-010.xlsx","pm":"Маша","account":"","curator":"Анастасия","facilitators":"","format":"очно","participants":"до 20","location":"в офисе клиента","price":415000.0,"marginPlan":65.0,"marginFact":59.0,"period":"Q2 2026","periodClose":"Q2 2026","closed":true,"category":"Рискованный","qual":{"artifactFormat":"Презентация программы, Карточки, Методичка","biz":{"margin":0,"relPotential":1,"pr":1,"strategy":0,"total":2},"client":{"trust":0,"timing":1,"wow":1,"satisfaction":1,"total":3},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":1,"growth":1,"total":5},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":1,"handoff":0,"total":3},"totalScore":13,"difficulties":"Единственная сложность — плотный график клиента, решили ранним согласованием слотов.","findings":"Договорённости, зафиксированные письменно на старте, снизили число правок.","artifactFeedback":"Клиент попросил доработать структуру итогового документа.","futureChanges":"Заранее договариваться с клиентом о формате обратной связи участников.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-010"},{"id":"PRJ-26-011","year":2026,"name":"Фармацевтика // Воркшоп по продуктовой стратегии, май 2026","client":"Фармацевтика","product":"Продуктовая стратегия","folder":"Фармацевтика // Воркшоп по продуктовой стратегии","budgetFile":"Смета_PRJ-26-011.xlsx","pm":"Аня","account":"","curator":"Анастасия, Антон","facilitators":"Павел, Александра","format":"онлайн","participants":"до 20","location":"онлайн","price":875000.0,"marginPlan":63.0,"marginFact":64.0,"period":"Q2 2026","periodClose":"Q2 2026","closed":true,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-011"},{"id":"PRJ-26-012","year":2026,"name":"Образование // Выездная стратегическая сессия команды, июнь 2026","client":"Образование","product":"Бизнес-стратегия","folder":"Образование // Выездная стратегическая сессия команды","budgetFile":"Смета_PRJ-26-012.xlsx","pm":"Аня","account":"","curator":"Данил","facilitators":"Яна","format":"онлайн","participants":"51-80","location":"онлайн","price":3400000.0,"marginPlan":75.0,"marginFact":78.0,"period":"Q2 2026","periodClose":"Q2 2026","closed":true,"category":"Нежелательный","qual":{"artifactFormat":"Презентация программы, Таблица с оцифровкой, Карточки","biz":{"margin":2,"relPotential":0,"pr":0,"strategy":0,"total":2},"client":{"trust":1,"timing":1,"wow":0,"satisfaction":0,"total":2},"team":{"timingCurator":0,"timingOthers":0,"notOverloaded":0,"trust":1,"growth":0,"total":1},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":2,"handoff":0,"total":4},"totalScore":9,"difficulties":"Согласование задач растягивалось из-за смены ответственного на стороне клиента.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Раньше согласовывать площадку и тайминг.","ppmLink":"https://example.com/ppm/PRJ-26-012"},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-012"},{"id":"PRJ-26-013","year":2026,"name":"Энергетика // Внутренний хакатон, июнь 2026","client":"Энергетика","product":"Хакатоны","folder":"Энергетика // Внутренний хакатон","budgetFile":"Смета_PRJ-26-013.xlsx","pm":"Аня","account":"","curator":"Елена","facilitators":"","format":"гибрид","participants":"до 20","location":"в офисе исполнителя","price":540000.0,"marginPlan":71.0,"marginFact":68.0,"period":"Q2 2026","periodClose":"Q2 2026","closed":true,"category":"Удачный","qual":{"artifactFormat":"Итоговая доска, Таблица с оцифровкой","biz":{"margin":1,"relPotential":2,"pr":1,"strategy":1,"total":5},"client":{"trust":2,"timing":2,"wow":1,"satisfaction":2,"total":7},"team":{"timingCurator":2,"timingOthers":2,"notOverloaded":1,"trust":2,"growth":1,"total":8},"mgmt":{"pmLoad":2,"logistics":1,"budgetRealism":2,"handoff":1,"total":6},"totalScore":26,"difficulties":"Единственная сложность — плотный график клиента, решили ранним согласованием слотов.","findings":"Договорённости, зафиксированные письменно на старте, снизили число правок.","artifactFeedback":"Клиент попросил доработать структуру итогового документа.","futureChanges":"Раньше согласовывать площадку и тайминг.","ppmLink":"https://example.com/ppm/PRJ-26-013"},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-013"},{"id":"PRJ-26-014","year":2026,"name":"Фармацевтика // Стратегическая сессия руководителей, июль 2026","client":"Фармацевтика","product":"Бизнес-стратегия","folder":"Фармацевтика // Стратегическая сессия руководителей","budgetFile":"Смета_PRJ-26-014.xlsx","pm":"Маша","account":"","curator":"Данил","facilitators":"","format":"очно","participants":"до 20","location":"на сторонней площадке в городе компании","price":595000.0,"marginPlan":75.0,"marginFact":62.0,"period":"Q3 2026","periodClose":"Q3 2026","closed":true,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-014"},{"id":"PRJ-26-015","year":2026,"name":"Страхование // Программа развития навыков команды, август 2026","client":"Страхование","product":"Образовательные программы","folder":"Страхование // Программа развития навыков команды","budgetFile":"Смета_PRJ-26-015.xlsx","pm":"Юля","account":"","curator":"Павел, Анастасия","facilitators":"","format":"онлайн","participants":"21-50","location":"онлайн","price":1020000.0,"marginPlan":71.0,"marginFact":78.0,"period":"Q3 2026","periodClose":"Q4 2026","closed":true,"category":"Рабочий","qual":{"artifactFormat":"Таблица с оцифровкой, Презентация программы, Методичка, Итоговая доска","biz":{"margin":2,"relPotential":2,"pr":0,"strategy":0,"total":4},"client":{"trust":2,"timing":1,"wow":1,"satisfaction":1,"total":5},"team":{"timingCurator":2,"timingOthers":0,"notOverloaded":1,"trust":1,"growth":1,"total":5},"mgmt":{"pmLoad":2,"logistics":1,"budgetRealism":1,"handoff":1,"total":5},"totalScore":19,"difficulties":"Существенных сложностей не было, работали по плану.","findings":"Раннее подключение аккаунта к подготовке упростило согласование ожиданий.","artifactFeedback":"Клиент попросил доработать структуру итогового документа.","futureChanges":"Заранее договариваться с клиентом о формате обратной связи участников.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-015"},{"id":"PRJ-26-016","year":2026,"name":"Медиа // Сессия по коммуникационной стратегии, июль 2026","client":"Медиа","product":"Коммуникационная стратегия","folder":"Медиа // Сессия по коммуникационной стратегии","budgetFile":"Смета_PRJ-26-016.xlsx","pm":"Аня, Ксюша","account":"Катя","curator":"Антон","facilitators":"Яна","format":"очно","participants":"81-100","location":"в офисе клиента","price":3620000.0,"marginPlan":64.0,"marginFact":62.0,"period":"Q3 2026","periodClose":"Q3 2026","closed":true,"category":"Рискованный","qual":{"artifactFormat":"Методичка, Презентация программы, Карточки, Таблица с оцифровкой","biz":{"margin":1,"relPotential":2,"pr":0,"strategy":0,"total":3},"client":{"trust":2,"timing":1,"wow":1,"satisfaction":1,"total":5},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":0,"trust":1,"growth":1,"total":4},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":2,"handoff":0,"total":4},"totalScore":16,"difficulties":"Небольшие правки по материалам в последний день, уложились в срок.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Участники активно пользовались раздаточными материалами после сессии.","futureChanges":"Закладывать больше времени на финальную вычитку материалов.","ppmLink":""},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-016"},{"id":"PRJ-26-017","year":2026,"name":"FMCG // Цикл мастер-классов для сотрудников, сентябрь 2026","client":"FMCG","product":"Образовательные программы","folder":"FMCG // Цикл мастер-классов для сотрудников","budgetFile":"Смета_PRJ-26-017.xlsx","pm":"Ксюша","account":"","curator":"Андрей","facilitators":"","format":"онлайн","participants":"51-80","location":"онлайн","price":2685000.0,"marginPlan":75.0,"marginFact":null,"period":"Q3 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-017"},{"id":"PRJ-26-018","year":2026,"name":"IT-компания // Внутренний хакатон, июль 2026","client":"IT-компания","product":"Хакатоны","folder":"IT-компания // Внутренний хакатон","budgetFile":"Смета_PRJ-26-018.xlsx","pm":"Ксюша, Маша","account":"Оля","curator":"Елена","facilitators":"Александра, Яна","format":"очно","participants":"21-50","location":"командировка за рубеж","price":500000.0,"marginPlan":63.0,"marginFact":null,"period":"Q3 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-018"},{"id":"PRJ-26-019","year":2026,"name":"IT-компания // Выездная стратегическая сессия команды, август 2026","client":"IT-компания","product":"Бизнес-стратегия","folder":"IT-компания // Выездная стратегическая сессия команды","budgetFile":"Смета_PRJ-26-019.xlsx","pm":"Маша","account":"","curator":"Данил","facilitators":"","format":"очно","participants":"21-50","location":"на сторонней площадке в городе компании","price":910000.0,"marginPlan":61.0,"marginFact":62.0,"period":"Q3 2026","periodClose":"Q3 2026","closed":true,"category":"Рискованный","qual":{"artifactFormat":"Итоговая доска, Методичка","biz":{"margin":2,"relPotential":1,"pr":0,"strategy":0,"total":3},"client":{"trust":2,"timing":0,"wow":1,"satisfaction":1,"total":4},"team":{"timingCurator":1,"timingOthers":1,"notOverloaded":1,"trust":2,"growth":0,"total":5},"mgmt":{"pmLoad":1,"logistics":1,"budgetRealism":2,"handoff":0,"total":4},"totalScore":16,"difficulties":"Расходы на площадку и логистику выросли относительно сметы.","findings":"Совместный прогон с клиентом за неделю до проведения помог поймать расхождения.","artifactFeedback":"Обратная связь по артефактам нейтральная, ждём комментариев после внедрения.","futureChanges":"Закладывать больше времени на финальную вычитку материалов.","ppmLink":"https://example.com/ppm/PRJ-26-019"},"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-019"},{"id":"PRJ-26-020","year":2026,"name":"FMCG // Сессия генерации идей, июль 2026","client":"FMCG","product":"Генерация идей","folder":"FMCG // Сессия генерации идей","budgetFile":"Смета_PRJ-26-020.xlsx","pm":"Аня","account":"Катя","curator":"Василий","facilitators":"","format":"асинхронный проект","participants":"асинхронно","location":"асинхронно","price":430000.0,"marginPlan":75.0,"marginFact":70.0,"period":"Q3 2026","periodClose":"Q3 2026","closed":true,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-020"},{"id":"PRJ-26-021","year":2026,"name":"FMCG // Продуктовая стратегия линейки, октябрь 2026","client":"FMCG","product":"Продуктовая стратегия","folder":"FMCG // Продуктовая стратегия линейки","budgetFile":"Смета_PRJ-26-021.xlsx","pm":"Юля, Маша","account":"","curator":"Андрей","facilitators":"","format":"онлайн","participants":"21-50","location":"онлайн","price":770000.0,"marginPlan":64.0,"marginFact":null,"period":"Q4 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-021"},{"id":"PRJ-26-022","year":2026,"name":"FMCG // Программа развития навыков команды, октябрь 2026","client":"FMCG","product":"Образовательные программы","folder":"FMCG // Программа развития навыков команды","budgetFile":"Смета_PRJ-26-022.xlsx","pm":"Маша","account":"","curator":"Данил","facilitators":"Алина, Александра","format":"очно","participants":"больше 150","location":"в офисе исполнителя","price":6140000.0,"marginPlan":73.0,"marginFact":null,"period":"Q4 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-022"},{"id":"PRJ-26-023","year":2026,"name":"IT-компания // Продуктовая стратегия линейки, октябрь 2026","client":"IT-компания","product":"Продуктовая стратегия","folder":"IT-компания // Продуктовая стратегия линейки","budgetFile":"Смета_PRJ-26-023.xlsx","pm":"Ксюша","account":"","curator":"Антон","facilitators":"","format":"очно","participants":"21-50","location":"в офисе исполнителя","price":735000.0,"marginPlan":76.0,"marginFact":null,"period":"Q4 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-023"},{"id":"PRJ-26-024","year":2026,"name":"FMCG // Обучающая программа для руководителей, декабрь 2026","client":"FMCG","product":"Образовательные программы","folder":"FMCG // Обучающая программа для руководителей","budgetFile":"Смета_PRJ-26-024.xlsx","pm":"Ксюша","account":"","curator":"Данил","facilitators":"Алина","format":"асинхронный проект","participants":"асинхронно","location":"асинхронно","price":415000.0,"marginPlan":75.0,"marginFact":null,"period":"Q4 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-024"},{"id":"PRJ-26-025","year":2026,"name":"Промышленность // Внутренний хакатон, ноябрь 2026","client":"Промышленность","product":"Хакатоны","folder":"Промышленность // Внутренний хакатон","budgetFile":"Смета_PRJ-26-025.xlsx","pm":"Ксюша","account":"Стёпа","curator":"Андрей","facilitators":"","format":"очно","participants":"101-150","location":"в офисе исполнителя","price":5050000.0,"marginPlan":70.0,"marginFact":null,"period":"Q4 2026","periodClose":"Q4 2026","closed":false,"category":null,"qual":null,"legacy":null,"ticket":"https://tracker.example.com/board/PRJ-26-025"}];
+(function(){
+"use strict";
+
+const LS_KEY = 'pmo_hub_projects_v4';
+const NOT_RATED = 'Пока не оценено';
+const CAT_COLORS = {'Удачный':'ok','Рабочий':'work','Рискованный':'risk','Нежелательный':'bad'};
+const CAT_HEX = {'Удачный':'#2F8F5B','Рабочий':'#3B6FA0','Рискованный':'#C98A2B','Нежелательный':'#B33B3B'};
+const SCORE_BLOCKS = {
+  biz: {margin:2, relPotential:2, pr:1, strategy:1},
+  client: {trust:2, timing:2, wow:2, satisfaction:2},
+  team: {timingCurator:2, timingOthers:2, notOverloaded:1, trust:2, growth:1},
+  mgmt: {pmLoad:2, logistics:2, budgetRealism:2, handoff:1},
+};
+const KNOWN_PRODUCTS = ['Образовательные программы','Генерация идей','Бизнес-стратегия','Продуктовая стратегия','Деловые игры','Коммуникационная стратегия','Кросс-функциональное взаимодействие','Хакатоны'];
+const KNOWN_LOCATIONS = ['в офисе исполнителя','в офисе клиента','на сторонней площадке в городе компании','командировка внутри страны','командировка за рубеж','онлайн','асинхронно'];
+// Categorical palette (accent first), used for product/curator/facilitator charts.
+const BRAND_PALETTE = ['#3B5BDB','#21212C','#C98A2B','#3B6FA0','#8A5A44','#6B6C78','#4F7D8C','#9C6B8E','#5C8A5C','#D9A24E','#7C6FA6','#4E9D8F'];
+const MARGIN_PLAN_COLOR = '#C7C8D1';
+const MARGIN_FACT_COLOR = '#3B5BDB';
+
+let DATA = [];
+let editingId = null;
+const quarterState = {};
+const MODERN_YEARS_KEY = 'pmo_hub_modernyears_v1';
+let modernYears = [2026];
+let currentModernYear = 2026;
+
+// ---------- CARD FIELD CONSTRUCTOR ----------
+// ---------- LOCAL BACKEND (demo) ----------
+// The demo has no server and no login: edits live in this browser's localStorage only.
+// The per-project merge logic below is the same as in the shared-server version.
+const LOCAL_STATE_KEY = 'pmo_demo_state_v1';
+let appPassword = 'demo';
+let memState = {data:[], modernYears:null, cardFields:null};
+function readLocalState(){
+  try{
+    const raw = localStorage.getItem(LOCAL_STATE_KEY);
+    if(raw) memState = JSON.parse(raw);
+  }catch(e){ /* storage blocked: keep working from memory */ }
+  return memState;
+}
+async function apiGetState(){ return readLocalState(); }
+async function apiSaveState(_pw, payload){
+  const state = readLocalState();
+  const byId = new Map((state.data||[]).map(p=>[p.id,p]));
+  (payload.upsert||[]).forEach(p=>byId.set(p.id,p));
+  (payload.remove||[]).forEach(id=>byId.delete(id));
+  state.data = [...byId.values()];
+  if(payload.modernYears) state.modernYears = payload.modernYears;
+  if(payload.cardFields) state.cardFields = payload.cardFields;
+  memState = state;
+  try{ localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(state)); }catch(e){ /* quota/blocked */ }
+  return {ok:true};
+}
+// Saving is per project: only records changed in THIS tab are sent, and the server merges them
+// into the shared state — two people / two open tabs can't overwrite each other any more.
+const dirtyIds = new Set(), removedIds = new Set();
+let metaDirty = false, syncTimer = null, syncing = false, syncAgain = false;
+function markDirty(id){ if(id==null) return; removedIds.delete(id); dirtyIds.add(id); queueSync(); }
+function markRemoved(id){ if(id==null) return; dirtyIds.delete(id); removedIds.add(id); queueSync(); }
+function queueSync(){
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(doSync, 300);
+}
+async function doSync(){
+  if(!appPassword) return;
+  if(syncing){ syncAgain = true; return; }
+  if(!dirtyIds.size && !removedIds.size && !metaDirty) return;
+  syncing = true;
+  const ids = [...dirtyIds], rem = [...removedIds], meta = metaDirty;
+  dirtyIds.clear(); removedIds.clear(); metaDirty = false;
+  const payload = { upsert: DATA.filter(p=>ids.includes(p.id)), remove: rem };
+  if(meta){ payload.modernYears = modernYears; payload.cardFields = cardFieldsConfig; }
+  try{
+    await apiSaveState(appPassword, payload);
+  }catch(e){
+    console.warn('sync failed', e);
+    ids.forEach(i=>dirtyIds.add(i)); rem.forEach(i=>removedIds.add(i)); if(meta) metaDirty = true;
+    toast('Не удалось сохранить на сервере — проверь соединение');
+  }finally{
+    syncing = false;
+    if(syncAgain){ syncAgain = false; queueSync(); }
+  }
+}
+function applyRemoteState(state){
+  const remote = Array.isArray(state.data) ? state.data : [];
+  const byId = new Map(remote.map(p=>[p.id,p]));
+  const keep = DATA.filter(p=> dirtyIds.has(p.id));          // my unsaved edits win
+  const merged = remote.filter(p=> !dirtyIds.has(p.id)).concat(keep);
+  if(!metaDirty){
+    if(Array.isArray(state.modernYears) && state.modernYears.length) modernYears = state.modernYears.slice();
+    if(state.cardFields && typeof state.cardFields==='object') cardFieldsConfig = state.cardFields;
+  }
+  merged.forEach(p=>{ if(p.year>2025 && !modernYears.includes(p.year)) modernYears.push(p.year); });
+  modernYears = [...new Set(modernYears)].sort((a,b)=>a-b);
+  DATA = merged;
+}
+async function fetchState(){
+  const state = await apiGetState(appPassword);
+  if(!Array.isArray(state.data) || !state.data.length){
+    DATA = JSON.parse(JSON.stringify(SEED_DATA));
+    modernYears = [2026]; cardFieldsConfig = {};
+    DATA.forEach(p=>dirtyIds.add(p.id)); metaDirty = true;
+    await doSync();
+    return;
+  }
+  applyRemoteState(state);
+}
+// pick up other people's edits: when the tab gets focus and once a minute
+let pulling = false;
+async function pullRemote(){
+  if(pulling || !appPassword || syncing || dirtyIds.size || removedIds.size || metaDirty) return;
+  if(document.getElementById('modalOverlay').classList.contains('active')) return;
+  pulling = true;
+  try{
+    const before = JSON.stringify([DATA, modernYears, cardFieldsConfig]);
+    applyRemoteState(await apiGetState(appPassword));
+    if(JSON.stringify([DATA, modernYears, cardFieldsConfig]) !== before){
+      renderNav(); renderEverything();
+    }
+  }catch(e){ console.warn('pull failed', e); }
+  finally{ pulling = false; }
+}
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) pullRemote(); });
+window.addEventListener('focus', pullRemote);
+setInterval(()=>{ if(!document.hidden) pullRemote(); }, 60000);
+
+const CARD_FIELDS_KEY = 'pmo_hub_cardfields_v1';
+const DEFAULT_CARD_FIELDS = [
+  {key:'price', label:'Сумма'},
+  {key:'pm', label:'Проджект'},
+  {key:'period', label:'Квартал'},
+  {key:'marginFact', label:'Факт маржа'},
+  {key:'ticket', label:'Тикет'},
+];
+let cardFieldsConfig = {};
+function saveCardFieldsConfig(){
+  metaDirty = true; queueSync();
+}
+function getCardFields(year){
+  const cfg = cardFieldsConfig[year];
+  return (Array.isArray(cfg) && cfg.length) ? cfg : DEFAULT_CARD_FIELDS.map(f=>({...f}));
+}
+function setCardFields(year, fields){
+  cardFieldsConfig[year] = fields;
+  saveCardFieldsConfig();
+}
+function getByPath(obj, path){
+  return String(path||'').split('.').reduce((o,k)=> (o==null ? undefined : o[k]), obj);
+}
+function formatCardFieldValue(p, key){
+  const val = getByPath(p, key);
+  if(val==null || val==='') return '—';
+  const lower = key.toLowerCase();
+  if(lower==='price') return fmtRub(val);
+  if(lower.includes('margin')) return fmtPct(val);
+  if(key==='period') return qLabel(p);
+  if(key==='periodClose') return qOnly(val);
+  if(key==='closed') return val ? 'Закрыт' : 'В работе';
+  return escapeHtml(String(val));
+}
+
+function saveData(){ /* per-project saving: see markDirty / markRemoved */ }
+function resetData(){
+  try{ localStorage.removeItem(LOCAL_STATE_KEY); }catch(e){}
+  memState = {data:[], modernYears:null, cardFields:null};
+  DATA = JSON.parse(JSON.stringify(SEED_DATA));
+  modernYears = [2026];
+  cardFieldsConfig = {};
+  DATA.forEach(p=>markDirty(p.id)); metaDirty = true; queueSync();
+  currentModernYear = 2026;
+  renderNav();
+  setActiveNavBtn('pmodern', currentModernYear);
+  populateModalYearSelect();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-pmodern').classList.add('active');
+  renderEverything();
+  toast('Данные сброшены к исходным');
+}
+function saveModernYears(){
+  metaDirty = true; queueSync();
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function fmtPct(n){
+  if(n===null || n===undefined || n==='') return '—';
+  return Number(n).toFixed(0)+'%';
+}
+function fmtRub(n){
+  if(n===null || n===undefined) return '—';
+  return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+}
+function fmtRubShort(n){
+  if(n===null || n===undefined) return '—';
+  if(Math.abs(n)>=1000000) return (n/1000000).toFixed(1).replace(/\.0$/,'') + ' млн ₽';
+  if(Math.abs(n)>=1000) return Math.round(n/1000) + ' тыс ₽';
+  return Math.round(n) + ' ₽';
+}
+function uniqueSorted(arr){ return [...new Set(arr.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ru')); }
+function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s){ return escapeHtml(s); }
+function numOrNull(v){ v = (v??'').toString().trim(); return v==='' ? null : Number(v); }
+function qOnly(period){ return period ? period.split(' ')[0] : '—'; }
+// Quarters a project was run in: `periods` (several) if set, otherwise the single `period`.
+function projQuarters(p){ return (Array.isArray(p.periods) && p.periods.length) ? p.periods : (p.period ? [p.period] : []); }
+function qLabel(p){ const qs = projQuarters(p); return qs.length ? qs.map(qOnly).join(' + ') : '—'; }
+
+function qualHasValues(q){
+  if(!q) return false;
+  return ['biz','client','team','mgmt'].some(b=> q[b] && Object.entries(q[b]).some(([k,v])=> k!=='total' && Number(v)>0));
+}
+function effectiveCategory(p){
+  if(p.category) return p.category;
+  // an unscored project (every item 0, total 0) has no category — it is «Пока не оценено», not "Нежелательный"
+  if(p.qual && p.qual.totalScore!=null && (p.qual.totalScore>0 || qualHasValues(p.qual))) return categoryFromScore(p.qual.totalScore);
+  return null;
+}
+function categoryFromScore(score){
+  if(score>=24) return 'Удачный';
+  if(score>=18) return 'Рабочий';
+  if(score>=11) return 'Рискованный';
+  return 'Нежелательный';
+}
+function legacyAvg(p){
+  const lg = p.legacy;
+  if(!lg) return null;
+  const vals = [lg.customer, lg.suppliers, lg.management, lg.margin].filter(v=>v!=null);
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+
+// ---------- NAV ----------
+function renderNav(){
+  const maxModern = Math.max(...modernYears);
+  let html = `<button class="nav-btn" data-view="p2025"><span class="nav-ico">🗄</span> Архив 2025</button>`;
+  modernYears.forEach(y=>{
+    const isActive = y===maxModern;
+    html += `<button class="nav-btn" data-view="pmodern" data-year="${y}"><span class="nav-ico">${isActive?'☰':'🗄'}</span> ${isActive?'Проекты':'Архив'} ${y}</button>`;
+  });
+  html += `<button class="nav-btn" data-view="analytics"><span class="nav-ico">◧</span> Аналитика</button>`;
+  document.getElementById('navList').innerHTML = html;
+}
+function setActiveNavBtn(view, year){
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    const match = b.dataset.view===view && (view!=='pmodern' || Number(b.dataset.year)===year);
+    b.classList.toggle('active', match);
+  });
+}
+function updateModernTitle(){
+  const maxModern = Math.max(...modernYears);
+  document.getElementById('modernTitle').textContent = (currentModernYear===maxModern ? 'Проекты ' : 'Архив ') + currentModernYear;
+}
+function switchModernYear(year){
+  currentModernYear = year;
+  updateModernTitle();
+  populate2026Filters();
+  render2026();
+}
+function populateModalYearSelect(){
+  const years = [2025, ...modernYears];
+  const sel = document.getElementById('f_year');
+  const prev = sel.value;
+  sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(years.map(String).includes(prev)) sel.value = prev;
+}
+document.getElementById('navList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.nav-btn');
+  if(!btn) return;
+  const view = btn.dataset.view;
+  if(view==='pmodern') currentModernYear = Number(btn.dataset.year);
+  setActiveNavBtn(view, currentModernYear);
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if(view==='pmodern') switchModernYear(currentModernYear);
+  if(view==='analytics') renderAnalytics();
+});
+document.getElementById('addYearBtn').addEventListener('click', ()=>{
+  const input = prompt('Введите год, который нужно добавить (например, 2027):');
+  if(input===null) return;
+  const year = parseInt(input.trim(), 10);
+  if(!Number.isInteger(year) || year < 2000 || year > 2100){
+    alert('Введите корректный год, например 2027.');
+    return;
+  }
+  if(year <= 2025){
+    alert('2025 и более ранние годы — это архив со старой моделью квалификации, его добавлять так не нужно.');
+    return;
+  }
+  const isNew = !modernYears.includes(year);
+  if(isNew){
+    modernYears.push(year);
+    modernYears.sort((a,b)=>a-b);
+    saveModernYears();
+  }
+  currentModernYear = year;
+  renderNav();
+  populateModalYearSelect();
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-pmodern').classList.add('active');
+  setActiveNavBtn('pmodern', year);
+  switchModernYear(year);
+  toast(isNew ? 'Год '+year+' добавлен' : 'Переключились на '+year);
+});
+document.getElementById('a_new').addEventListener('click', ()=>openNewModal(currentModernYear));
+document.getElementById('b_new').addEventListener('click', ()=>openNewModal(2025));
+
+// ---------- CARD FIELD CONSTRUCTOR MODAL ----------
+const cfOverlay = document.getElementById('cfOverlay');
+function renderCfList(){
+  const fields = getCardFields(currentModernYear);
+  const list = document.getElementById('cfList');
+  list.innerHTML = fields.map((f,i)=> `
+    <div class="cf-row" data-i="${i}">
+      <div class="cf-btns">
+        <button type="button" class="cf-up" ${i===0?'disabled':''} title="Выше">↑</button>
+        <button type="button" class="cf-down" ${i===fields.length-1?'disabled':''} title="Ниже">↓</button>
+      </div>
+      <div class="cf-label">${escapeHtml(f.label)}</div>
+      <div class="cf-key mono">${escapeHtml(f.key)}</div>
+      <div class="cf-btns"><button type="button" class="cf-del" title="Убрать">×</button></div>
+    </div>`).join('') || '<p class="cf-hint">Пока нет ни одного поля — карточка показывает только название проекта.</p>';
+}
+function openCardFieldsModal(){
+  document.getElementById('cfModalTitle').textContent = 'Карточка проекта — ' + currentModernYear;
+  document.getElementById('cf_label').value = '';
+  document.getElementById('cf_key').value = '';
+  renderCfList();
+  cfOverlay.classList.add('active');
+}
+document.getElementById('a_cardFields').addEventListener('click', openCardFieldsModal);
+document.getElementById('cfModalClose').addEventListener('click', ()=> cfOverlay.classList.remove('active'));
+document.getElementById('cfModalDone').addEventListener('click', ()=> cfOverlay.classList.remove('active'));
+cfOverlay.addEventListener('click', (e)=>{ if(e.target===cfOverlay) cfOverlay.classList.remove('active'); });
+document.getElementById('cfList').addEventListener('click', (e)=>{
+  const row = e.target.closest('.cf-row');
+  if(!row) return;
+  const i = Number(row.dataset.i);
+  const fields = getCardFields(currentModernYear);
+  if(e.target.classList.contains('cf-del')){
+    fields.splice(i,1);
+  } else if(e.target.classList.contains('cf-up') && i>0){
+    [fields[i-1], fields[i]] = [fields[i], fields[i-1]];
+  } else if(e.target.classList.contains('cf-down') && i<fields.length-1){
+    [fields[i+1], fields[i]] = [fields[i], fields[i+1]];
+  } else {
+    return;
+  }
+  setCardFields(currentModernYear, fields);
+  renderCfList();
+  render2026();
+});
+document.getElementById('cf_addBtn').addEventListener('click', ()=>{
+  const label = document.getElementById('cf_label').value.trim();
+  const key = document.getElementById('cf_key').value.trim();
+  if(!label || !key){
+    toast('Заполни и название, и техническое имя поля');
+    return;
+  }
+  const fields = getCardFields(currentModernYear);
+  fields.push({label, key});
+  setCardFields(currentModernYear, fields);
+  document.getElementById('cf_label').value = '';
+  document.getElementById('cf_key').value = '';
+  renderCfList();
+  render2026();
+});
+
+document.getElementById('resetLink').addEventListener('click', (e)=>{
+  e.preventDefault();
+  if(confirm('Стереть все изменения в этом браузере и вернуть исходные 50 демо-проектов?')) resetData();
+});
+
+function fillSelect(id, values, placeholder){
+  const el = document.getElementById(id);
+  const current = el.value;
+  el.innerHTML = `<option value="">${placeholder}</option>` + values.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');
+  if(values.includes(current)) el.value = current;
+}
+function fillDatalist(id, values){
+  document.getElementById(id).innerHTML = values.map(v=>`<option value="${escapeAttr(v)}">`).join('');
+}
+function populateOtherSelect(selectId, otherId, discovered, known){
+  const sel = document.getElementById(selectId);
+  const other = document.getElementById(otherId);
+  const values = uniqueSorted([...known, ...discovered]);
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— выбрать —</option>' +
+    values.map(v=>`<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('') +
+    '<option value="__other__">Другое… (вписать)</option>';
+  if(values.includes(prev)) sel.value = prev;
+  if(!sel.dataset.wired){
+    sel.dataset.wired = '1';
+    sel.addEventListener('change', ()=>{
+      const isOther = sel.value === '__other__';
+      other.style.display = isOther ? 'block' : 'none';
+      if(!isOther) other.value = '';
+    });
+  }
+}
+function setOtherSelectValue(selectId, otherId, value){
+  const sel = document.getElementById(selectId);
+  const other = document.getElementById(otherId);
+  const options = [...sel.options].map(o=>o.value);
+  if(value && !options.includes(value)){
+    sel.value = '__other__';
+    other.style.display = 'block';
+    other.value = value;
+  } else {
+    sel.value = value || '';
+    other.style.display = 'none';
+    other.value = '';
+  }
+}
+function getOtherSelectValue(selectId, otherId){
+  const sel = document.getElementById(selectId);
+  if(sel.value === '__other__') return document.getElementById(otherId).value.trim();
+  return sel.value;
+}
+
+function populateModalDatalists(){
+  fillDatalist('clientList', uniqueSorted(DATA.map(p=>p.client)));
+  fillDatalist('pmList', uniqueSorted(DATA.flatMap(p=>(p.pm||'').split(',').map(s=>s.trim()))));
+  fillDatalist('accList', uniqueSorted(DATA.flatMap(p=>(p.account||'').split(',').map(s=>s.trim()))));
+  fillDatalist('curList', uniqueSorted(DATA.flatMap(p=>(p.curator||'').split(',').map(s=>s.trim()))));
+  fillDatalist('facList', uniqueSorted(DATA.flatMap(p=>(p.facilitators||'').split(',').map(s=>s.trim()))));
+  populateOtherSelect('f_product', 'f_product_other', uniqueSorted(DATA.map(p=>p.product)), KNOWN_PRODUCTS);
+  populateOtherSelect('f_location', 'f_location_other', uniqueSorted(DATA.map(p=>p.location)), KNOWN_LOCATIONS);
+}
+
+// ---------- QUARTER TABS ----------
+function quartersForYear(year){
+  return uniqueSorted(DATA.filter(p=>p.year===year).flatMap(projQuarters)).sort();
+}
+function buildQuarterTabs(containerId, year, onChange){
+  const el = document.getElementById(containerId);
+  const qs = quartersForYear(year);
+  el.innerHTML = `<button class="qtab${quarterState[year]===''?' active':''}" data-q="">Все</button>` +
+    qs.map(q=>{
+      const short = q.split(' ')[0];
+      return `<button class="qtab${quarterState[year]===q?' active':''}" data-q="${escapeAttr(q)}">${short}</button>`;
+    }).join('');
+  el.querySelectorAll('.qtab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      quarterState[year] = btn.dataset.q;
+      el.querySelectorAll('.qtab').forEach(b=> b.classList.toggle('active', b===btn));
+      onChange();
+    });
+  });
+}
+
+// ---------- MODERN YEAR VIEW ----------
+function populate2026Filters(){
+  const year = currentModernYear;
+  const rows = DATA.filter(p=>p.year===year);
+  fillSelect('a_client', uniqueSorted(rows.map(p=>p.client)), 'Клиент: все');
+  fillSelect('a_product', uniqueSorted(rows.map(p=>p.product)), 'Продукт: все');
+  fillSelect('a_pm', uniqueSorted(rows.flatMap(p=>(p.pm||'').split(',').map(s=>s.trim()))), 'Проджект: все');
+  fillSelect('a_qual', ['Удачный','Рабочий','Рискованный','Нежелательный',NOT_RATED], 'Квалификация: все');
+  if(!(year in quarterState)) quarterState[year] = '';
+  buildQuarterTabs('a_qtabs', year, render2026);
+}
+['a_search','a_client','a_product','a_pm','a_qual','a_status'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', render2026);
+  document.getElementById(id).addEventListener('change', render2026);
+});
+function getFiltered2026(){
+  const year = currentModernYear;
+  const q = document.getElementById('a_search').value.trim().toLowerCase();
+  const client = document.getElementById('a_client').value;
+  const product = document.getElementById('a_product').value;
+  const pm = document.getElementById('a_pm').value;
+  const qual = document.getElementById('a_qual').value;
+  const status = document.getElementById('a_status').value;
+  const quarter = quarterState[year];
+  return DATA.filter(p=>{
+    if(p.year!==year) return false;
+    if(quarter && !projQuarters(p).includes(quarter)) return false;
+    if(client && p.client!==client) return false;
+    if(product && p.product!==product) return false;
+    if(pm && !(p.pm||'').includes(pm)) return false;
+    if(qual && (effectiveCategory(p)||NOT_RATED)!==qual) return false;
+    if(status==='open' && p.closed) return false;
+    if(status==='closed' && !p.closed) return false;
+    if(q){
+      const hay = [p.name,p.client,p.pm,p.account,p.curator,p.id].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> (b.period||'').localeCompare(a.period||'') || a.name.localeCompare(b.name,'ru'));
+}
+const QUAL_TAG = {'Удачный':'tag-ok','Рабочий':'tag-work','Рискованный':'tag-risk','Нежелательный':'tag-bad'};
+function render2026(){
+  const year = currentModernYear;
+  const rows = getFiltered2026();
+  const total = DATA.filter(p=>p.year===year).length;
+  document.getElementById('a_count').textContent = rows.length + ' из ' + total;
+  const grid = document.getElementById('a_rows');
+  document.getElementById('a_empty').style.display = rows.length ? 'none' : 'block';
+  const fields = getCardFields(year);
+  grid.innerHTML = rows.map(p=>{
+    const statusClass = p.closed ? 'st-closed' : 'st-work';
+    const cat = effectiveCategory(p);
+    const badge = `<span class="tag ${QUAL_TAG[cat]||'tag-neutral'}" title="Квалификация проекта">${escapeHtml(cat || NOT_RATED)}</span>`;
+    let hasPrice = false;
+    const body = fields.map(f=>{
+      if(f.key==='ticket'){
+        return p.ticket ? `<a href="${escapeAttr(p.ticket)}" target="_blank" rel="noopener" class="ticket-link" onclick="event.stopPropagation()">${escapeHtml(f.label)} ↗</a>` : '';
+      }
+      if(f.key==='price'){
+        const val = getByPath(p,'price');
+        hasPrice = true;
+        return `<div class="pcard-pricebar"><div class="pcard-price">${val!=null ? fmtRub(val) : '—'}</div>${badge}</div>`;
+      }
+      return `<div class="pcard-row"><span class="pcard-k">${escapeHtml(f.label)}</span><span class="pcard-v">${formatCardFieldValue(p, f.key)}</span></div>`;
+    }).join('');
+    return `<div class="pcard ${statusClass}" data-id="${escapeAttr(p.id)}">
+      <div class="pcard-name">${escapeHtml(p.name)}</div>
+      ${hasPrice ? '' : `<div style="margin-bottom:8px">${badge}</div>`}${body}
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.pcard').forEach(card=> card.addEventListener('click', ()=> openEditModal(card.dataset.id)));
+}
+
+// ---------- 2025 ARCHIVE VIEW ----------
+function populate2025Filters(){
+  const rows = DATA.filter(p=>p.year===2025);
+  fillSelect('b_client', uniqueSorted(rows.map(p=>p.client)), 'Клиент: все');
+  fillSelect('b_product', uniqueSorted(rows.map(p=>p.product)), 'Продукт: все');
+  fillSelect('b_pm', uniqueSorted(rows.flatMap(p=>(p.pm||'').split(',').map(s=>s.trim()))), 'Проджект: все');
+  buildQuarterTabs('b_qtabs', 2025, render2025);
+}
+['b_search','b_client','b_product','b_pm','b_status'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', render2025);
+  document.getElementById(id).addEventListener('change', render2025);
+});
+function getFiltered2025(){
+  const q = document.getElementById('b_search').value.trim().toLowerCase();
+  const client = document.getElementById('b_client').value;
+  const product = document.getElementById('b_product').value;
+  const pm = document.getElementById('b_pm').value;
+  const status = document.getElementById('b_status').value;
+  const quarter = quarterState[2025];
+  return DATA.filter(p=>{
+    if(p.year!==2025) return false;
+    if(quarter && !projQuarters(p).includes(quarter)) return false;
+    if(client && p.client!==client) return false;
+    if(product && p.product!==product) return false;
+    if(pm && !(p.pm||'').includes(pm)) return false;
+    if(status==='open' && p.closed) return false;
+    if(status==='closed' && !p.closed) return false;
+    if(q){
+      const hay = [p.name,p.client,p.pm,p.curator,p.id].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b)=> (b.period||'').localeCompare(a.period||'') || a.name.localeCompare(b.name,'ru'));
+}
+function render2025(){
+  const rows = getFiltered2025();
+  const total = DATA.filter(p=>p.year===2025).length;
+  document.getElementById('b_count').textContent = rows.length + ' из ' + total;
+  const tbody = document.getElementById('b_rows');
+  document.getElementById('b_empty').style.display = rows.length ? 'none' : 'block';
+  tbody.innerHTML = rows.map(p=>{
+    const statusTag = p.closed ? `<span class="tag tag-neutral">Закрыт</span>` : `<span class="tag tag-work">В работе</span>`;
+    const sat = p.legacy && p.legacy.satisfaction!=null ? fmtPct(p.legacy.satisfaction) : '—';
+    return `<tr data-id="${escapeAttr(p.id)}">
+      <td><div class="proj-name">${escapeHtml(p.name)}</div><div class="proj-id mono">${escapeHtml(p.id)}</div></td>
+      <td>${escapeHtml(p.client||'—')}</td>
+      <td>${escapeHtml(p.product||'—')}</td>
+      <td>${escapeHtml(p.pm||'—')}</td>
+      <td class="mono">${qLabel(p)}</td>
+      <td class="num" style="font-weight:700;">${fmtRub(p.price)}</td>
+      <td class="num">${fmtPct(p.marginPlan)} / ${fmtPct(p.marginFact)}</td>
+      <td class="num">${sat}</td>
+      <td>${statusTag}</td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(tr=> tr.addEventListener('click', ()=> openEditModal(tr.dataset.id)));
+}
+
+function renderEverything(){
+  populate2026Filters();
+  populate2025Filters();
+  populateModalDatalists();
+  render2026();
+  render2025();
+  updateModernTitle();
+  if(document.getElementById('view-analytics').classList.contains('active')) renderAnalytics();
+}
+
+// ---------- MODAL ----------
+const overlay = document.getElementById('modalOverlay');
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('btnCancel').addEventListener('click', closeModal);
+overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+document.getElementById('toggleQual').addEventListener('click', ()=>{
+  const block = document.getElementById('qualBlock');
+  block.classList.toggle('open');
+  document.getElementById('toggleQual').textContent = block.classList.contains('open') ? 'Свернуть ▴' : 'Развернуть ▾';
+});
+document.getElementById('f_year').addEventListener('change', (e)=> { toggleQualSection(Number(e.target.value)); fillPeriodSelects(Number(e.target.value)); });
+
+function toggleQualSection(year){
+  const modern = document.getElementById('qualModern');
+  const legacy = document.getElementById('qualLegacy');
+  const label = document.getElementById('qualSectionLabel');
+  if(year <= 2025){
+    modern.style.display = 'none'; legacy.style.display = 'block';
+    label.textContent = 'Архивная квалификация ' + year;
+  } else {
+    modern.style.display = 'block'; legacy.style.display = 'none';
+    label.textContent = 'Квалификация проекта (после ППМ)';
+  }
+}
+
+let periodsSel = [];
+function sortQuarters(arr){
+  return [...new Set(arr)].sort((a,b)=>{
+    const [qa,ya]=a.split(' '), [qb,yb]=b.split(' ');
+    return (Number(ya)-Number(yb)) || qa.localeCompare(qb);
+  });
+}
+function renderPeriodChips(y){
+  const box = document.getElementById('f_period_box');
+  if(!box) return;
+  box.innerHTML = [y, y+1].map(yy=> `<div class="qrow"><span class="qyear">${yy}</span>` +
+    ['Q1','Q2','Q3','Q4'].map(q=>{
+      const v = `${q} ${yy}`;
+      return `<button type="button" class="qchip${periodsSel.includes(v)?' on':''}" data-q="${v}">${q}</button>`;
+    }).join('') + '</div>').join('');
+  box.querySelectorAll('.qchip').forEach(b=> b.addEventListener('click', ()=>{
+    const v = b.dataset.q;
+    periodsSel = periodsSel.includes(v) ? periodsSel.filter(x=>x!==v) : sortQuarters([...periodsSel, v]);
+    b.classList.toggle('on');
+    document.getElementById('f_period').value = periodsSel[0] || '';
+  }));
+  document.getElementById('f_period').value = periodsSel[0] || '';
+}
+function renderCloseChips(y){
+  const box = document.getElementById('f_periodClose_box'), hid = document.getElementById('f_periodClose');
+  if(!box) return;
+  y = Number(y || document.getElementById('f_year').value || currentModernYear);
+  const cur = hid.value, curYear = Number((cur.split(' ')[1])||0);
+  const years = [y, y+1]; if(curYear && !years.includes(curYear)) years.unshift(curYear);
+  box.innerHTML = years.map(yy=> `<div class="qrow"><span class="qyear">${yy}</span>` +
+    ['Q1','Q2','Q3','Q4'].map(q=>{
+      const v = `${q} ${yy}`;
+      return `<button type="button" class="qchip${cur===v?' on':''}" data-q="${v}">${q}</button>`;
+    }).join('') + '</div>').join('');
+  box.querySelectorAll('.qchip').forEach(b=> b.addEventListener('click', ()=>{
+    hid.value = hid.value===b.dataset.q ? '' : b.dataset.q;      // click again to clear
+    renderCloseChips(y);
+  }));
+}
+function fillPeriodSelects(year){
+  const y = Number(year || document.getElementById('f_year').value || currentModernYear);
+  renderCloseChips(y);
+  periodsSel = periodsSel.filter(q=> q.endsWith(' '+y) || q.endsWith(' '+(y+1)));
+  renderPeriodChips(y);
+}
+// ---------- MULTI-NAME FIELDS (проджект / аккаунт / куратор / фасилитаторы) ----------
+const TAGBOX_LISTS = {f_pm:'pmList', f_account:'accList', f_curator:'curList', f_facilitators:'facList'};
+function splitNames(v){ return (v||'').split(',').map(x=>x.trim()).filter(Boolean); }
+function renderTagBox(id){
+  const box = document.getElementById(id+'_box');
+  if(!box) return;
+  const names = splitNames(document.getElementById(id).value);
+  box.querySelector('.tags').innerHTML = names.map((n,i)=>
+    `<span class="tag">${escapeHtml(n)}<button type="button" class="tagx" data-i="${i}" aria-label="Убрать">×</button></span>`).join('');
+}
+function refreshTagBoxes(){ Object.keys(TAGBOX_LISTS).forEach(renderTagBox); }
+function addTagNames(id, raw){
+  const hid = document.getElementById(id);
+  const cur = splitNames(hid.value);
+  splitNames(raw).forEach(n=>{ if(!cur.some(c=>c.toLowerCase()===n.toLowerCase())) cur.push(n); });
+  hid.value = cur.join(', ');
+  renderTagBox(id);
+}
+function flushTagInputs(){
+  Object.keys(TAGBOX_LISTS).forEach(id=>{
+    const inp = document.querySelector('#'+id+'_box .taginput');
+    if(inp && inp.value.trim()){ addTagNames(id, inp.value); inp.value=''; }
+  });
+}
+function initTagBoxes(){
+  Object.keys(TAGBOX_LISTS).forEach(id=>{
+    const box = document.getElementById(id+'_box');
+    if(!box || box.dataset.ready) return;
+    box.dataset.ready = '1';
+    box.innerHTML = '<span class="tags"></span><input type="text" class="taginput" list="'+TAGBOX_LISTS[id]+'" placeholder="добавить…" autocomplete="off">';
+    const inp = box.querySelector('.taginput');
+    box.addEventListener('click', e=>{
+      const x = e.target.closest('.tagx');
+      if(x){
+        const names = splitNames(document.getElementById(id).value);
+        names.splice(Number(x.dataset.i),1);
+        document.getElementById(id).value = names.join(', ');
+        renderTagBox(id);
+      } else inp.focus();
+    });
+    inp.addEventListener('keydown', e=>{
+      if(e.key==='Enter' || e.key===','){
+        e.preventDefault();
+        if(inp.value.trim()){ addTagNames(id, inp.value); inp.value=''; }
+      } else if(e.key==='Backspace' && !inp.value){
+        const names = splitNames(document.getElementById(id).value);
+        if(names.length){ names.pop(); document.getElementById(id).value = names.join(', '); renderTagBox(id); }
+      }
+    });
+    inp.addEventListener('input', e=>{
+      // picking a suggestion from the list (no typing event) or typing a comma adds the name right away
+      if(!e.inputType || e.inputType==='insertReplacementText' || inp.value.includes(',')){
+        if(inp.value.trim()){ addTagNames(id, inp.value); inp.value=''; }
+      }
+    });
+    inp.addEventListener('blur', ()=>{ if(inp.value.trim()){ addTagNames(id, inp.value); inp.value=''; } });
+  });
+  refreshTagBoxes();
+}
+initTagBoxes();
+
+fillPeriodSelects(2026);
+
+function openNewModal(year){
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Новый проект';
+  document.getElementById('modalSub').textContent = 'Заполните поля старта проекта — квалификацию добавите позже';
+  document.getElementById('btnDelete').style.display = 'none';
+  clearForm();
+  document.getElementById('f_year').value = String(year);
+  fillPeriodSelects(year);
+  toggleQualSection(year);
+  document.getElementById('qualBlock').classList.remove('open');
+  document.getElementById('toggleQual').textContent = 'Развернуть ▾';
+  document.getElementById('idWarn').style.display = 'none';
+  overlay.classList.add('active');
+  document.getElementById('f_name').focus();
+}
+function openEditModal(id){
+  const p = DATA.find(x=>x.id===id);
+  if(!p) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = p.name;
+  document.getElementById('modalSub').textContent = 'ID: ' + p.id + ' · ' + (p.year||'');
+  document.getElementById('btnDelete').style.display = 'inline-flex';
+  fillForm(p);
+  toggleQualSection(p.year);
+  const hasQual = !!p.qual || !!p.legacy;
+  document.getElementById('qualBlock').classList.toggle('open', hasQual);
+  document.getElementById('toggleQual').textContent = hasQual ? 'Свернуть ▴' : 'Развернуть ▾';
+  document.getElementById('idWarn').style.display = 'none';
+  overlay.classList.add('active');
+}
+function closeModal(){ overlay.classList.remove('active'); editingId=null; }
+
+function urlOf(v){
+  v = (v||'').trim();
+  if(/^https?:\/\/\S+$/i.test(v)) return v;
+  if(/^www\.\S+$/i.test(v)) return 'https://'+v;
+  return '';
+}
+function refreshFieldLinks(){
+  ['f_ticket','f_budgetFile'].forEach(id=>{
+    const a = document.getElementById(id+'_link'), u = urlOf(document.getElementById(id).value);
+    if(u){ a.href = u; a.style.display = 'inline'; } else { a.removeAttribute('href'); a.style.display = 'none'; }
+  });
+}
+['f_ticket','f_budgetFile'].forEach(id=> document.getElementById(id).addEventListener('input', refreshFieldLinks));
+function clearForm(){
+  ['f_name','f_id','f_client','f_pm','f_account','f_curator','f_facilitators',
+   'f_ticket','f_budgetFile','f_price','f_marginPlan','f_marginFact',
+   'q_artifactFormat','q_ppmLink','q_difficulties','q_findings','q_artifactFeedback','q_futureChanges',
+   'lg_satisfaction'
+  ].forEach(id=> document.getElementById(id).value = '');
+  document.getElementById('f_year').value = String(currentModernYear);
+  document.getElementById('f_format').value = '';
+  document.getElementById('f_participants').value = '';
+  periodsSel = [];
+  document.getElementById('f_period').value = '';
+  document.getElementById('f_periodClose').value = '';
+  renderCloseChips();
+  document.getElementById('f_closed').value = 'false';
+  document.getElementById('f_category').value = '';
+  setOtherSelectValue('f_product', 'f_product_other', '');
+  setOtherSelectValue('f_location', 'f_location_other', '');
+  document.querySelectorAll('.scorerow select[data-blk]').forEach(s=> s.value = '0');
+  refreshFieldLinks();
+  refreshTagBoxes();
+  updateScoreTotals();
+}
+
+function fillForm(p){
+  document.getElementById('f_name').value = p.name||'';
+  document.getElementById('f_id').value = p.id||'';
+  document.getElementById('f_year').value = String(p.year||currentModernYear);
+  periodsSel = (Array.isArray(p.periods) && p.periods.length) ? sortQuarters(p.periods) : (p.period ? [p.period] : []);
+  document.getElementById('f_periodClose').value = p.periodClose||'';
+  fillPeriodSelects(p.year||currentModernYear);
+  document.getElementById('f_client').value = p.client||'';
+  setOtherSelectValue('f_product', 'f_product_other', p.product||'');
+  document.getElementById('f_pm').value = p.pm||'';
+  document.getElementById('f_account').value = p.account||'';
+  document.getElementById('f_curator').value = p.curator||'';
+  document.getElementById('f_facilitators').value = p.facilitators||'';
+  refreshTagBoxes();
+  document.getElementById('f_format').value = p.format||'';
+  document.getElementById('f_participants').value = p.participants||'';
+  setOtherSelectValue('f_location', 'f_location_other', p.location||'');
+  document.getElementById('f_ticket').value = p.ticket||'';
+  document.getElementById('f_budgetFile').value = p.budgetFile||'';
+  refreshFieldLinks();
+  document.getElementById('f_price').value = p.price!=null ? p.price : '';
+  document.getElementById('f_marginPlan').value = p.marginPlan!=null ? p.marginPlan : '';
+  document.getElementById('f_marginFact').value = p.marginFact!=null ? p.marginFact : '';
+  document.getElementById('f_period').value = p.period||'';
+  document.getElementById('f_periodClose').value = p.periodClose||'';
+  document.getElementById('f_closed').value = p.closed ? 'true' : 'false';
+  document.getElementById('f_category').value = p.category||'';
+
+  const q = p.qual || {};
+  document.getElementById('q_artifactFormat').value = q.artifactFormat||'';
+  document.getElementById('q_ppmLink').value = q.ppmLink||'';
+  document.getElementById('q_difficulties').value = q.difficulties||'';
+  document.getElementById('q_findings').value = q.findings||'';
+  document.getElementById('q_artifactFeedback').value = q.artifactFeedback||'';
+  document.getElementById('q_futureChanges').value = q.futureChanges||'';
+  document.querySelectorAll('.scorerow select[data-blk]').forEach(sel=>{
+    const blk = sel.dataset.blk, k = sel.dataset.k;
+    const val = q[blk] && q[blk][k]!=null ? q[blk][k] : 0;
+    sel.value = String(val);
+  });
+  updateScoreTotals();
+
+  const lg = p.legacy || {};
+  document.getElementById('lg_satisfaction').value = lg.satisfaction!=null ? lg.satisfaction : '';
+}
+
+document.querySelectorAll('.scorerow select[data-blk]').forEach(sel=> sel.addEventListener('change', updateScoreTotals));
+function updateScoreTotals(){
+  let grand = 0;
+  Object.keys(SCORE_BLOCKS).forEach(blk=>{
+    let sum = 0;
+    document.querySelectorAll(`.scorerow select[data-blk="${blk}"]`).forEach(sel=>{ sum += Number(sel.value)||0; });
+    document.getElementById('tot_'+blk).textContent = sum;
+    grand += sum;
+  });
+  document.getElementById('totalScoreVal').textContent = grand;
+  const catSelect = document.getElementById('f_category');
+  const suggested = categoryFromScore(grand);
+  const hint = document.getElementById('categoryHint');
+  if(anyScoreEntered()){
+    hint.textContent = 'Автоматически по баллам: ' + suggested + '. При необходимости выбери другую квалификацию вручную выше.';
+    if(!catSelect.value || catSelect.value===NOT_RATED) catSelect.value = suggested;
+  } else {
+    hint.textContent = 'Проставь баллы — квалификация предложится автоматически.';
+  }
+}
+function anyScoreEntered(){
+  return [...document.querySelectorAll('.scorerow select[data-blk]')].some(s=>Number(s.value)>0);
+}
+
+// ---------- SAVE / DELETE ----------
+document.getElementById('btnSave').addEventListener('click', ()=>{
+  const id = document.getElementById('f_id').value.trim();
+  const name = document.getElementById('f_name').value.trim();
+  if(!id || !name){
+    document.getElementById('idWarn').style.display = 'block';
+    document.getElementById('idWarn').textContent = 'Заполни название и ID проекта — без них карточку не связать со второй таблицей.';
+    return;
+  }
+  const dupe = DATA.find(p=>p.id===id && p.id!==editingId);
+  if(dupe){
+    document.getElementById('idWarn').style.display = 'block';
+    document.getElementById('idWarn').textContent = `Такой ID уже используется в проекте «${dupe.name}». Выбери другой ID.`;
+    return;
+  }
+  document.getElementById('idWarn').style.display = 'none';
+
+  const num = (v)=> v===''||v===null||v===undefined ? null : Number(v);
+  const yearVal = Number(document.getElementById('f_year').value);
+
+  let qual = null, legacy = null;
+  if(yearVal <= 2025){
+    legacy = {
+      satisfaction: numOrNull(document.getElementById('lg_satisfaction').value),
+    };
+  } else {
+    const hasQual = document.getElementById('qualBlock').classList.contains('open') || anyScoreEntered();
+    if(hasQual){
+      qual = {
+        artifactFormat: document.getElementById('q_artifactFormat').value,
+        ppmLink: document.getElementById('q_ppmLink').value,
+        difficulties: document.getElementById('q_difficulties').value,
+        findings: document.getElementById('q_findings').value,
+        artifactFeedback: document.getElementById('q_artifactFeedback').value,
+        futureChanges: document.getElementById('q_futureChanges').value,
+        totalScore: Number(document.getElementById('totalScoreVal').textContent)||0,
+      };
+      Object.keys(SCORE_BLOCKS).forEach(blk=>{
+        qual[blk] = {};
+        document.querySelectorAll(`.scorerow select[data-blk="${blk}"]`).forEach(sel=>{
+          qual[blk][sel.dataset.k] = Number(sel.value)||0;
+        });
+        qual[blk].total = Number(document.getElementById('tot_'+blk).textContent)||0;
+      });
+    }
+  }
+
+  flushTagInputs();
+  const rec = {
+    id, name, year: yearVal,
+    client: document.getElementById('f_client').value,
+    product: getOtherSelectValue('f_product', 'f_product_other'),
+    pm: document.getElementById('f_pm').value,
+    account: document.getElementById('f_account').value,
+    curator: document.getElementById('f_curator').value,
+    facilitators: document.getElementById('f_facilitators').value,
+    format: document.getElementById('f_format').value,
+    participants: document.getElementById('f_participants').value,
+    location: getOtherSelectValue('f_location', 'f_location_other'),
+    ticket: document.getElementById('f_ticket').value,
+    budgetFile: document.getElementById('f_budgetFile').value,
+    price: num(document.getElementById('f_price').value),
+    marginPlan: num(document.getElementById('f_marginPlan').value),
+    marginFact: num(document.getElementById('f_marginFact').value),
+    period: sortQuarters(periodsSel)[0] || '',
+    periodClose: document.getElementById('f_periodClose').value,
+    closed: document.getElementById('f_closed').value === 'true',
+    category: document.getElementById('f_category').value || null,
+    qual, legacy,
+    folder: editingId ? (DATA.find(p=>p.id===editingId)||{}).folder || '' : '',
+  };
+
+  if(periodsSel.length>1) rec.periods = sortQuarters(periodsSel);
+  const _old = editingId ? DATA.find(x=>x.id===editingId) : null;
+  if(_old && _old.qualFrom) rec.qualFrom = _old.qualFrom;
+  if(editingId){
+    const idx = DATA.findIndex(p=>p.id===editingId);
+    DATA[idx] = rec;
+    if(editingId !== rec.id) markRemoved(editingId);
+  } else {
+    DATA.push(rec);
+  }
+  markDirty(rec.id);
+  const wasEdit = !!editingId;
+  closeModal();
+  renderEverything();
+  toast(wasEdit ? 'Изменения сохранены' : 'Проект добавлен');
+});
+
+document.getElementById('btnDelete').addEventListener('click', ()=>{
+  if(!editingId) return;
+  if(!confirm('Удалить проект «'+ (DATA.find(p=>p.id===editingId)||{}).name +'»?')) return;
+  markRemoved(editingId);
+  DATA = DATA.filter(p=>p.id!==editingId);
+  closeModal();
+  renderEverything();
+  toast('Проект удалён');
+});
+
+// ---------- ANALYTICS ----------
+let charts = {};
+function destroyCharts(){ Object.values(charts).forEach(c=>c && c.destroy()); charts = {}; }
+// Draws the numbers right on the charts, so nobody has to hover to read them.
+// Enabled per chart through options.plugins.valueLabels = { format, stacked, totals }.
+function labelInkOn(bg){
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(bg||'').trim());
+  if(!m) return '#21212C';
+  const n = parseInt(m[1],16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  return (0.299*r + 0.587*g + 0.114*b) < 150 ? '#FFFFFF' : '#21212C';
+}
+const valueLabelsPlugin = {
+  id:'valueLabels',
+  afterDatasetsDraw(chart, args, opts){
+    if(!opts || opts.display===false) return;
+    const ctx = chart.ctx;
+    const fmt = opts.format || (v=>String(v));
+    const type = chart.config.type;
+    const horizontal = chart.options.indexAxis==='y';
+    const ink = (getComputedStyle(document.documentElement).getPropertyValue('--ink') || '#21212C').trim();
+    ctx.save();
+    ctx.font = '600 10.5px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if(type==='doughnut' || type==='pie'){
+      const ds = chart.data.datasets[0], meta = chart.getDatasetMeta(0);
+      meta.data.forEach((arc,i)=>{
+        const v = ds.data[i];
+        if(!v) return;
+        const mid = (arc.innerRadius + arc.outerRadius)/2;
+        if((arc.endAngle-arc.startAngle)*mid < 20) return;   // slice too thin — the legend carries the number
+        const pos = arc.tooltipPosition();
+        const bg = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : ds.backgroundColor;
+        ctx.fillStyle = labelInkOn(bg);
+        ctx.fillText(fmt(v,0,i,chart), pos.x, pos.y);
+      });
+    } else if(opts.stacked){
+      const n = chart.data.labels.length;
+      for(let i=0;i<n;i++){
+        const segs = [];
+        chart.data.datasets.forEach((ds,di)=>{
+          const meta = chart.getDatasetMeta(di);
+          if(meta.hidden) return;
+          const v = ds.data[i], el = meta.data[i];
+          if(v && el) segs.push({v, el, ds});
+        });
+        if(!segs.length) continue;
+        const total = segs.reduce((a,b)=>a+b.v,0);
+        const top = Math.min(...segs.map(sg=>sg.el.y));
+        if(segs.length>1){
+          segs.forEach(sg=>{
+            const h = Math.abs(sg.el.base - sg.el.y);
+            if(h < 14) return;
+            ctx.fillStyle = labelInkOn(sg.ds.backgroundColor);
+            ctx.fillText(fmt(sg.v), sg.el.x, (sg.el.y + sg.el.base)/2);
+          });
+        }
+        if(opts.totals !== false){
+          ctx.fillStyle = ink;
+          ctx.fillText(fmt(total), segs[0].el.x, top - 9);
+        }
+      }
+    } else {
+      chart.data.datasets.forEach((ds,di)=>{
+        const meta = chart.getDatasetMeta(di);
+        if(meta.hidden) return;
+        meta.data.forEach((el,i)=>{
+          const v = ds.data[i];
+          if(v==null || (v===0 && !opts.showZero)) return;
+          ctx.fillStyle = ink;
+          if(horizontal){ ctx.textAlign='left'; ctx.fillText(fmt(v,di,i,chart), el.x + 6, el.y); }
+          else { ctx.textAlign='center'; ctx.fillText(fmt(v,di,i,chart), el.x, el.y - 9); }
+        });
+      });
+    }
+    ctx.restore();
+  }
+};
+Chart.register(valueLabelsPlugin);
+
+function chartOpts(scaleOverrides, valueLabels){
+  const o = {
+    responsive:true, maintainAspectRatio:false,
+    layout:{ padding:{ top:14, right: 8 } },
+    plugins:{ legend:{ position:'bottom', labels:{ boxWidth:11, font:{size:11} } }, valueLabels: valueLabels || {display:false} },
+    scales: Object.assign({
+      x:{ grid:{display:false}, ticks:{font:{size:11}} },
+      y:{ grid:{color:'rgba(120,120,130,.12)'}, ticks:{font:{size:11}} }
+    }, scaleOverrides)
+  };
+  if(o.scales.y && o.scales.y.grace==null) o.scales.y.grace = '12%';
+  return o;
+}
+const centerTotalPlugin = { id:'centerTotal', afterDraw(chart){
+  if(chart.config.type!=='doughnut') return;
+  const a = chart.chartArea, ds = chart.data.datasets[0]; if(!a||!ds) return;
+  const tot = ds.data.reduce((x,y)=>x+y,0), cx=(a.left+a.right)/2, cy=(a.top+a.bottom)/2, c=chart.ctx;
+  c.save(); c.textAlign='center'; c.textBaseline='middle';
+  const css = getComputedStyle(document.documentElement);
+  c.fillStyle = (css.getPropertyValue('--ink')||'#21212C').trim();
+  c.font = '700 26px "IBM Plex Mono",monospace'; c.fillText(tot, cx, cy-8);
+  c.fillStyle = (css.getPropertyValue('--ink-soft')||'#6B6B78').trim();
+  c.font = '500 11px Inter,sans-serif'; c.fillText('всего проектов', cx, cy+14);
+  c.restore();
+}};
+Chart.register(centerTotalPlugin);
+function pieOpts(){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{ position:'right', labels:{ boxWidth:11, font:{size:10.5}, padding:8,
+        // legend carries the numbers too: «12 (14%) · Название» — numbers first so a long name is the part that gets cut
+        generateLabels: ch=>{
+          const base = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(ch);
+          const data = ch.data.datasets[0].data, tot = data.reduce((a,b)=>a+b,0) || 1;
+          base.forEach(l=>{ const v = data[l.index]; l.text = `${v} (${Math.round(v/tot*100)}%) · ${l.text}`; });
+          return base;
+        } } },
+      valueLabels:{ format: v=>v }
+    },
+  };
+}
+const FMT_INT = v=> v;
+const FMT_PCT = v=> Math.round(v)+'%';
+
+function renderAnalytics(){
+  const yearSel = document.getElementById('aYear');
+  const allYears = uniqueSorted(DATA.map(p=>String(p.year))).sort();
+  const prevYearVal = yearSel.value;
+  const optsHtml = '<option value="">Все годы</option>' + allYears.map(y=>`<option value="${y}">${y}</option>`).join('');
+  if(yearSel.innerHTML !== optsHtml) yearSel.innerHTML = optsHtml;
+  if(allYears.includes(prevYearVal)) yearSel.value = prevYearVal;
+  if(!yearSel.dataset.wired){
+    yearSel.dataset.wired = '1';
+    yearSel.addEventListener('change', renderAnalytics);
+  }
+  const year = yearSel.value;
+  const rows = year ? DATA.filter(p=>String(p.year)===year) : DATA;
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+
+  // stat tiles
+  const marginFactVals = rows.map(p=>p.marginFact).filter(v=>v!=null);
+  const marginPlanVals = rows.map(p=>p.marginPlan).filter(v=>v!=null);
+  const tiles = [
+    {v: rows.length, l:'Проектов'},
+    {v: fmtPct(avg(marginPlanVals)), l:'Средняя план-маржа'},
+    {v: fmtPct(avg(marginFactVals)), l:'Средняя факт-маржа'},
+  ];
+  document.getElementById('statTiles').innerHTML = tiles.map(t=>`<div class="stat"><div class="v">${t.v}</div><div class="l">${t.l}</div></div>`).join('');
+
+  // activity charts: a project counts in every quarter it ran; money charts: only in its start quarter (no double counting)
+  const quarters = sortQuarters(rows.flatMap(projQuarters));
+  const startQuarters = sortQuarters(rows.map(p=>p.period).filter(Boolean));
+  destroyCharts();
+
+  // margin chart
+  const planByQ = startQuarters.map(q=> avg(rows.filter(p=>p.period===q).map(p=>p.marginPlan).filter(v=>v!=null)) );
+  const factByQ = startQuarters.map(q=> avg(rows.filter(p=>p.period===q).map(p=>p.marginFact).filter(v=>v!=null)) );
+  charts.margin = new Chart(document.getElementById('chartMargin'), {
+    type:'bar',
+    data:{ labels: startQuarters, datasets:[
+      {label:'План', data: planByQ, backgroundColor: MARGIN_PLAN_COLOR},
+      {label:'Факт', data: factByQ, backgroundColor: MARGIN_FACT_COLOR},
+    ]},
+    options: chartOpts({y:{ticks:{callback:v=>v+'%'}}}, {format:FMT_PCT})
+  });
+
+  // qualification chart (stacked, 2026+ only)
+  const cats = ['Удачный','Рабочий','Рискованный','Нежелательный'];
+  const qualRows = rows.filter(p=> effectiveCategory(p) && effectiveCategory(p)!==NOT_RATED && !p.qualFrom);
+  charts.qual = new Chart(document.getElementById('chartQual'), {
+    type:'bar',
+    data:{ labels: quarters, datasets: cats.map(c=>({
+      label:c, backgroundColor: CAT_HEX[c],
+      data: quarters.map(q=> qualRows.filter(p=>projQuarters(p).includes(q) && effectiveCategory(p)===c).length)
+    }))},
+    options: chartOpts({x:{stacked:true},y:{stacked:true, ticks:{precision:0}}}, {stacked:true, totals:true, format:FMT_INT})
+  });
+
+  renderProductCharts(rows, quarters);
+  renderClientRevenue(rows, startQuarters);
+
+  // curator chart (top 8 by volume)
+  const curCounts = {};
+  rows.forEach(p=> (p.curator||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(c=> curCounts[c]=(curCounts[c]||0)+1));
+  const topCurators = Object.entries(curCounts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>e[0]);
+  charts.curator = new Chart(document.getElementById('chartCurator'), {
+    type:'bar',
+    data:{ labels: quarters, datasets: topCurators.map((cur,i)=>({
+      label: cur, backgroundColor: BRAND_PALETTE[i%BRAND_PALETTE.length],
+      data: quarters.map(q=> rows.filter(p=>projQuarters(p).includes(q) && (p.curator||'').includes(cur)).length)
+    }))},
+    options: chartOpts({x:{stacked:true},y:{stacked:true, ticks:{precision:0}}}, {stacked:true, totals:true, format:FMT_INT})
+  });
+
+  renderRunCharts(rows);
+
+  renderLoadTable('pmLoadTable', rows, 'pm', true);
+  renderLoadTable('facLoadTable', rows, 'facilitators', false);
+  renderYearComparison();
+}
+
+// ---------- формат / место / участники (поля из карточки проекта) ----------
+function countField(rows, key){
+  const c = {}; let filled = 0;
+  rows.forEach(p=>{ const v = String(p[key]||'').trim(); if(!v) return; filled++; c[v] = (c[v]||0) + 1; });
+  return {c, filled};
+}
+function optionOrder(selectId){ return [...document.querySelectorAll('#'+selectId+' option')].map(o=>o.value || o.textContent).filter(v=>v && v!=='—' && !v.startsWith('—')); }
+function wrapLabel(text, max){
+  const words = String(text).split(' '), lines = [''];
+  words.forEach(w=>{
+    const cur = lines[lines.length-1];
+    if(cur && (cur+' '+w).length > max) lines.push(w); else lines[lines.length-1] = cur ? cur+' '+w : w;
+  });
+  return lines.length>1 ? lines : lines[0];
+}
+function drawFieldChart(key, canvasId, subId, rows, o){
+  const {c, filled} = countField(rows, o.field);
+  let labels = Object.keys(c);
+  if(o.order){
+    const pos = v=>{ const i = o.order.indexOf(v); return i<0 ? 999 : i; };
+    labels.sort((a,b)=> pos(a)-pos(b) || c[b]-c[a]);
+  } else labels.sort((a,b)=> c[b]-c[a] || a.localeCompare(b,'ru'));
+  const total = labels.reduce((a,l)=>a+c[l],0) || 1;
+  document.getElementById(subId).textContent = rows.length
+    ? (filled ? `Заполнено у ${filled} из ${rows.length} проектов · ${o.hint}` : `Пока не заполнено ни у одного проекта — выбери значение в карточке проекта`)
+    : '';
+  const horizontal = !o.vertical;
+  charts[key] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels: horizontal ? labels.map(l=>wrapLabel(l,26)) : labels, datasets:[{ data: labels.map(l=>c[l]), backgroundColor: MARGIN_FACT_COLOR, borderRadius:4 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis: horizontal ? 'y' : 'x',
+      layout:{ padding: horizontal ? {right:78} : {top:20} },
+      plugins:{ legend:{display:false}, valueLabels:{ format:(v)=> `${v} · ${Math.round(v/total*100)}%` } },
+      scales: horizontal
+        ? { x:{ display:false, beginAtZero:true, grace:'5%' }, y:{ grid:{display:false}, ticks:{font:{size:11.5}} } }
+        : { x:{ grid:{display:false}, ticks:{font:{size:11.5}} }, y:{ display:false, beginAtZero:true, grace:'5%' } }
+    }
+  });
+}
+function renderRunCharts(rows){
+  drawFieldChart('fmt','chartFormat','fmtSub', rows, {field:'format', order: optionOrder('f_format'), hint:'число проектов и доля'});
+  drawFieldChart('loc','chartLocation','locSub', rows, {field:'location', hint:'число проектов и доля'});
+  drawFieldChart('part','chartParticipants','partSub', rows, {field:'participants', order: optionOrder('f_participants'), vertical:true, hint:'число проектов и доля'});
+}
+
+function renderProductCharts(rows, quarters){
+  const sel = document.getElementById('productQuarterSel');
+  const prevVal = sel.value;
+  sel.innerHTML = quarters.map(q=>`<option value="${q}">${q}</option>`).join('');
+  if(quarters.includes(prevVal)) sel.value = prevVal;
+  else if(quarters.length) sel.value = quarters[quarters.length-1];
+  if(!sel.dataset.wired){
+    sel.dataset.wired = '1';
+    sel.addEventListener('change', ()=> drawProductQuarterPie(rows));
+  }
+  drawProductQuarterPie(rows);
+  drawProductYearPie(rows);
+}
+function productCounts(rowsSubset){
+  const counts = {};
+  rowsSubset.forEach(p=>{ const k = p.product||'—'; counts[k]=(counts[k]||0)+1; });
+  return counts;
+}
+function drawProductQuarterPie(rows){
+  const sel = document.getElementById('productQuarterSel');
+  const q = sel.value;
+  const subset = rows.filter(p=>projQuarters(p).includes(q));
+  const counts = productCounts(subset);
+  const labels = Object.keys(counts);
+  if(charts.productQ) charts.productQ.destroy();
+  charts.productQ = new Chart(document.getElementById('chartProductQuarter'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: labels.map(l=>counts[l]), backgroundColor: labels.map((_,i)=>BRAND_PALETTE[i%BRAND_PALETTE.length]) }] },
+    options: pieOpts()
+  });
+}
+function drawProductYearPie(rows){
+  const counts = productCounts(rows);
+  const labels = Object.keys(counts);
+  if(charts.productY) charts.productY.destroy();
+  charts.productY = new Chart(document.getElementById('chartProductYear'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: labels.map(l=>counts[l]), backgroundColor: labels.map((_,i)=>BRAND_PALETTE[i%BRAND_PALETTE.length]) }] },
+    options: pieOpts()
+  });
+}
+
+function renderClientRevenue(rows, quarters){
+  const sum = arr => arr.reduce((a,b)=>a+b,0);
+  const byClient = {};
+  rows.forEach(p=>{
+    const key = p.client || '—';
+    byClient[key] = byClient[key] || {total:0, byQ:{}};
+    const price = p.price||0;
+    byClient[key].total += price;
+    byClient[key].byQ[p.period] = (byClient[key].byQ[p.period]||0) + price;
+  });
+  const list = Object.entries(byClient).sort((a,b)=>b[1].total-a[1].total).slice(0,15);
+  const qShort = quarters.map(q=>q.split(' ')[0]);
+  let html = '<tr><th>Клиент</th>' + qShort.map(q=>`<th>${q}</th>`).join('') + '<th>Итого за год</th></tr>';
+  list.forEach(([client, d])=>{
+    html += '<tr><td>'+escapeHtml(client)+'</td>' +
+      quarters.map(q=>`<td class="num">${d.byQ[q]? fmtRub(d.byQ[q]) : '—'}</td>`).join('') +
+      `<td class="num" style="font-weight:700;">${fmtRub(d.total)}</td></tr>`;
+  });
+  document.getElementById('clientRevenueTable').innerHTML = html || '<tr><td class="dim">Нет данных</td></tr>';
+}
+function renderLoadTable(tableId, rows, field, includeMargin){
+  const stats = {};
+  rows.forEach(p=>{
+    (p[field]||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(name=>{
+      stats[name] = stats[name] || {count:0, marginSum:0, marginN:0};
+      stats[name].count++;
+      if(p.marginFact!=null){ stats[name].marginSum += p.marginFact; stats[name].marginN++; }
+    });
+  });
+  const list = Object.entries(stats).sort((a,b)=>b[1].count-a[1].count);
+  const label = field==='pm' ? 'Проджект' : 'Фасилитатор';
+  const header = includeMargin ? `<tr><th>${label}</th><th>Проектов</th><th>Средняя фактмаржа</th></tr>` : `<tr><th>${label}</th><th>Проектов</th></tr>`;
+  document.getElementById(tableId).innerHTML = header +
+    list.map(([name,s])=> includeMargin
+      ? `<tr><td>${escapeHtml(name)}</td><td class="num">${s.count}</td><td class="num">${s.marginN? fmtPct(s.marginSum/s.marginN) : '—'}</td></tr>`
+      : `<tr><td>${escapeHtml(name)}</td><td class="num">${s.count}</td></tr>`
+    ).join('');
+}
+
+function renderYearComparison(){
+  const years = uniqueSorted(DATA.map(p=>String(p.year))).sort();
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+  const sum = arr => arr.reduce((a,b)=>a+b,0);
+  const byYear = {};
+  years.forEach(y=> byYear[y] = DATA.filter(p=>String(p.year)===y));
+
+  const metrics = [
+    {label:'Проектов', calc: rs=> rs.length, fmt: v=> v},
+    {label:'Средняя план-маржа', calc: rs=> avg(rs.map(p=>p.marginPlan).filter(v=>v!=null)), fmt: fmtPct},
+    {label:'Средняя факт-маржа', calc: rs=> avg(rs.map(p=>p.marginFact).filter(v=>v!=null)), fmt: fmtPct},
+    {label:'Средняя цена проекта', calc: rs=> avg(rs.map(p=>p.price).filter(v=>v!=null)), fmt: fmtRub},
+    {label:'Суммарный бюджет', calc: rs=> sum(rs.map(p=>p.price).filter(v=>v!=null)), fmt: fmtRub},
+  ];
+
+  let html = '<tr><th>Метрика</th>' + years.map(y=>`<th>${y}</th>`).join('') + (years.length===2 ? '<th>Δ</th>' : '') + '</tr>';
+  metrics.forEach(m=>{
+    const vals = years.map(y=> m.calc(byYear[y]));
+    html += '<tr><td>'+m.label+'</td>' + vals.map(v=>`<td class="num">${m.fmt(v)}</td>`).join('');
+    if(years.length===2){
+      const [a,b] = vals;
+      let delta = '—';
+      if(a!=null && b!=null && a!==0){
+        const pct = ((b-a)/Math.abs(a))*100;
+        delta = (pct>=0?'+':'') + pct.toFixed(0) + '%';
+      }
+      html += `<td class="num">${delta}</td>`;
+    }
+    html += '</tr>';
+  });
+  document.getElementById('yearCompareTable').innerHTML = html;
+
+  const qNums = ['Q1','Q2','Q3','Q4'];
+  const yearColors = ['#C7C8D1', MARGIN_FACT_COLOR, '#21212C', '#C98A2B'];
+  const countByYQ = (y,q)=> byYear[y].filter(p=> projQuarters(p).some(x=>x.startsWith(q))).length;
+  const avgPriceByYQ = (y,q)=> avg(byYear[y].filter(p=> (p.period||'').startsWith(q) && p.price!=null).map(p=>p.price));
+
+  if(charts.yearCount) charts.yearCount.destroy();
+  charts.yearCount = new Chart(document.getElementById('chartYearCount'), {
+    type:'bar',
+    data:{ labels: qNums, datasets: years.map((y,i)=>({ label:y, backgroundColor: yearColors[i%yearColors.length], data: qNums.map(q=>countByYQ(y,q)) })) },
+    options: chartOpts({y:{ticks:{precision:0}}}, {format:FMT_INT})
+  });
+
+  if(charts.yearPrice) charts.yearPrice.destroy();
+  charts.yearPrice = new Chart(document.getElementById('chartYearPrice'), {
+    type:'bar',
+    data:{ labels: years, datasets:[{ label:'Средняя цена проекта', backgroundColor: BRAND_PALETTE.slice(0,years.length), data: years.map(y=> avg(byYear[y].map(p=>p.price).filter(v=>v!=null))) }] },
+    options: (()=>{ const o = chartOpts({y:{ticks:{callback:v=>fmtRubShort(v)}}}, {format:fmtRubShort}); o.plugins.legend = {display:false}; return o; })()
+  });
+
+  if(charts.yearPriceQ) charts.yearPriceQ.destroy();
+  charts.yearPriceQ = new Chart(document.getElementById('chartYearPriceQuarter'), {
+    type:'bar',
+    data:{ labels: qNums, datasets: years.map((y,i)=>({ label:y, backgroundColor: yearColors[i%yearColors.length], data: qNums.map(q=>avgPriceByYQ(y,q)) })) },
+    options: chartOpts({y:{ticks:{callback:v=>fmtRubShort(v)}}}, {format:fmtRubShort})
+  });
+}
+
+
+// ---------- INIT ----------
+async function bootApp(){
+  await fetchState();
+  currentModernYear = Math.max(...modernYears);
+  renderNav();
+  setActiveNavBtn('pmodern', currentModernYear);
+  populateModalYearSelect();
+  fillPeriodSelects(currentModernYear);
+  renderEverything();
+}
+bootApp().catch(err=>{ console.error(err); toast('Не удалось запустить демо'); });
+
+})();
+</script>
+</body>
+</html>
