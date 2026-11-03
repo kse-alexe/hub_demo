@@ -161,6 +161,9 @@ tbody tr:hover{background:var(--accent-soft);}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 @media (max-width:980px){.grid2{grid-template-columns:1fr;}}
 .chartbox{position:relative;height:240px;}
+.tablescroll{overflow-x:auto;max-width:100%;}
+.tablescroll:focus-visible{outline:2px solid var(--accent, #5B5BD6);outline-offset:2px;border-radius:4px;}
+.tablescroll .minitable{min-width:640px;}
 .minitable{width:100%;border-collapse:collapse;font-size:12.5px;}
 .minitable th{text-align:left;color:var(--ink-soft);font-weight:600;font-size:11px;padding:6px 8px;border-bottom:1px solid var(--line);}
 .minitable td{padding:6px 8px;border-bottom:1px solid var(--line);}
@@ -261,6 +264,22 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
   .tagbox .tagx{min-width:40px;min-height:40px;margin:-10px -4px;}
   .modal-close{min-width:44px;min-height:44px;font-size:24px;} }
 @media (prefers-reduced-motion:reduce){ *,*::before,*::after{transition-duration:.01ms !important;animation-duration:.01ms !important;} }
+
+/* справочное окно с проектами: появляется при наведении на столбец, сектор или имя */
+.projpop{position:fixed;left:0;top:0;z-index:300;width:max-content;max-width:min(460px,calc(100vw - 16px));min-width:230px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(20,20,35,.2);padding:10px 12px 11px;font-size:12.5px;line-height:1.35;pointer-events:none;}
+.projpop[hidden]{display:none;}
+.projpop .pp-h{font-weight:600;font-size:13px;}
+.projpop .pp-s{color:var(--ink-soft);margin:2px 0 7px;}
+.projpop ul{list-style:none;margin:0;padding:0;display:grid;gap:5px;}
+.projpop li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:0 10px;align-items:baseline;}
+.projpop .pp-n{overflow-wrap:anywhere;}
+.projpop .pp-p{white-space:nowrap;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;}
+.projpop .pp-q{white-space:nowrap;color:var(--ink-soft);}
+.projpop .pp-more{color:var(--ink-soft);margin-top:6px;}
+.poptrig{cursor:help;border-bottom:1px dotted var(--ink-soft);}
+.poptrig:focus-visible{outline:2px solid var(--accent, #5B5BD6);outline-offset:2px;border-radius:3px;}
+tr[data-pop]:hover td{background:rgba(120,120,140,.08);}
+td[data-pop]{cursor:help;}
 </style>
 </head>
 <body>
@@ -423,7 +442,7 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
       <div class="panel">
         <h2>Выручка по клиентам</h2>
         <p class="sub">Сумма «Цены проекта» по клиенту — по кварталам и за выбранный год целиком</p>
-        <table class="minitable" id="clientRevenueTable"></table>
+        <div class="tablescroll" tabindex="0" role="region" aria-label="Выручка по клиентам по кварталам, таблица"><table class="minitable" id="clientRevenueTable"></table></div>
       </div>
 
       <div class="panel">
@@ -739,6 +758,8 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
 <datalist id="accList"></datalist>
 <datalist id="curList"></datalist>
 <datalist id="facList"></datalist>
+
+<div id="projPop" class="projpop" role="tooltip" hidden></div>
 
 <script>
 const SEED_DATA = 
@@ -1840,6 +1861,91 @@ function pieOpts(){
 const FMT_INT = v=> v;
 const FMT_PCT = v=> Math.round(v)+'%';
 
+// ---------- СПРАВОЧНОЕ ОКНО С ПРОЕКТАМИ ----------
+// Наведи на столбец, сектор графика или на имя в таблице — рядом появится список проектов с этим тегом.
+// Это только справка: окно не кликается и ничего не открывает. С клавиатуры работает на именах в таблицах (Tab, Esc закрывает).
+const POP_MAX = 16;
+let popRows = [];
+let popOwner = null;
+let popKey = '';
+const popEl = document.getElementById('projPop');
+function plural(n, a, b, c){ const m = n % 100, d = n % 10; return (m>10 && m<20) ? c : d===1 ? a : (d>=2 && d<=4) ? b : c; }
+function nameList(v){ return String(v||'').split(',').map(x=>x.trim()).filter(Boolean); }
+function periodKey(p){ const m = /^(Q\d)\s+(\d{4})/.exec(p.period||''); return m ? m[2]+m[1] : 'zzzz'; }
+function hidePop(owner){
+  if(owner && popOwner !== owner) return;
+  popEl.hidden = true; popOwner = null; popKey = '';
+}
+function placePop(x, y){
+  const w = popEl.offsetWidth, h = popEl.offsetHeight, m = 8;
+  let left = x + 16; if(left + w > window.innerWidth - m) left = x - w - 16;
+  left = Math.max(m, Math.min(left, window.innerWidth - w - m));
+  let top = y - h / 2; top = Math.max(m, Math.min(top, window.innerHeight - h - m));
+  popEl.style.transform = `translate(${Math.round(left)}px,${Math.round(top)}px)`;
+}
+function showPop(model, x, y, owner, key){
+  if(popOwner === owner && popKey === key){ placePop(x, y); return; }
+  const list = model.rows.slice().sort((a,b)=> periodKey(a).localeCompare(periodKey(b)) || (b.price||0)-(a.price||0));
+  const n = list.length;
+  const shown = list.slice(0, POP_MAX);
+  const sub = [`${n} ${plural(n,'проект','проекта','проектов')}`, model.value].filter(Boolean).join(' · ');
+  popEl.innerHTML = `<div class="pp-h">${escapeHtml(model.title)}</div><div class="pp-s">${escapeHtml(sub)}</div>` +
+    (n ? '<ul>' + shown.map(p=>`<li><span class="pp-n">${escapeHtml(p.name)}</span><span class="pp-p">${fmtRub(p.price)}</span><span class="pp-q">${escapeHtml(p.period||'—')}</span></li>`).join('') + '</ul>' : '<div class="pp-s">Нет проектов</div>') +
+    (n > POP_MAX ? `<div class="pp-more">и ещё ${n - POP_MAX}</div>` : '');
+  popEl.dataset.count = String(n);
+  popEl.dataset.ids = list.map(p=>p.id).join(',');
+  popEl.hidden = false; popOwner = owner; popKey = key;
+  placePop(x, y);
+}
+// charts: Chart.js own tooltip is replaced by this window
+function externalPop(ctx){
+  const {chart, tooltip} = ctx, spec = chart.$pop;
+  if(!spec || !tooltip || tooltip.opacity === 0 || !tooltip.dataPoints || !tooltip.dataPoints.length){ hidePop(chart.canvas); return; }
+  const dp = tooltip.dataPoints[0], d = dp.datasetIndex, i = dp.dataIndex;
+  const list = spec.rows(d, i);
+  const rect = chart.canvas.getBoundingClientRect();
+  showPop({title: spec.title(d, i), value: spec.value ? spec.value(d, i, list) : '', rows: list},
+    rect.left + tooltip.caretX, rect.top + tooltip.caretY, chart.canvas, `${chart.id}:${d}:${i}`);
+}
+Chart.defaults.plugins.tooltip.enabled = false;
+Chart.defaults.plugins.tooltip.external = externalPop;
+// tables: rows and cells carry data-pop='{"k":"pm|fac|client","n":"name","q":"Q1 2026"}'
+function tablePopModel(spec){
+  const inField = f => p => nameList(p[f]).includes(spec.n);
+  const test = spec.k==='client' ? p=>(p.client||'—')===spec.n : spec.k==='pm' ? inField('pm') : inField('facilitators');
+  const list = popRows.filter(test).filter(p=> !spec.q || p.period===spec.q);
+  const label = spec.k==='client' ? 'Клиент' : spec.k==='pm' ? 'Проджект' : 'Фасилитатор';
+  const value = spec.k==='client' ? 'выручка ' + fmtRub(list.reduce((a,p)=>a+(p.price||0),0)) : '';
+  return {title: `${label}: ${spec.n}` + (spec.q ? ` · ${spec.q}` : ''), value, rows: list};
+}
+let tableOwner = null;
+function showTablePop(el, x, y){
+  let spec; try{ spec = JSON.parse(el.dataset.pop); }catch(e){ return; }
+  if(x == null){ const r = (el.querySelector('.poptrig') || el).getBoundingClientRect(); x = r.right; y = r.top + r.height / 2; }
+  showPop(tablePopModel(spec), x, y, el, el.dataset.pop);
+  tableOwner = el;
+}
+function popAttr(o){ return escapeHtml(JSON.stringify(o)); }
+document.addEventListener('mouseover', e=>{
+  const el = e.target.closest ? e.target.closest('[data-pop]') : null;
+  if(el === tableOwner) return;
+  if(tableOwner){ hidePop(tableOwner); tableOwner = null; }
+  if(el) showTablePop(el, e.clientX, e.clientY);
+});
+document.addEventListener('mousemove', e=>{ if(tableOwner && !popEl.hidden) placePop(e.clientX, e.clientY); });
+document.addEventListener('focusin', e=>{
+  const el = e.target.closest ? e.target.closest('[data-pop]') : null;
+  if(el && e.target.classList.contains('poptrig')){ if(tableOwner && tableOwner !== el) hidePop(tableOwner); showTablePop(el); }
+});
+document.addEventListener('focusout', e=>{ if(tableOwner && e.target.classList && e.target.classList.contains('poptrig')){ hidePop(tableOwner); tableOwner = null; } });
+document.addEventListener('keydown', e=>{ if(e.key === 'Escape'){ hidePop(); tableOwner = null; } });
+document.addEventListener('pointerdown', e=>{ if(!e.target.closest || (!e.target.closest('[data-pop]') && !e.target.closest('canvas'))){ hidePop(); tableOwner = null; } });
+window.addEventListener('scroll', ()=>{
+  // keyboard focus keeps the window (it just follows the name); mouse hover closes it, the pointer is no longer where it was
+  if(tableOwner && tableOwner.contains(document.activeElement) && document.activeElement.classList.contains('poptrig')){ popKey = ''; showTablePop(tableOwner); }
+  else { hidePop(); tableOwner = null; }
+}, true);
+
 function renderAnalytics(){
   const yearSel = document.getElementById('aYear');
   const allYears = uniqueSorted(DATA.map(p=>String(p.year))).sort();
@@ -1853,6 +1959,7 @@ function renderAnalytics(){
   }
   const year = yearSel.value;
   const rows = year ? DATA.filter(p=>String(p.year)===year) : DATA;
+  popRows = rows; hidePop(); tableOwner = null;
   const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
 
   // stat tiles
@@ -1881,6 +1988,11 @@ function renderAnalytics(){
     ]},
     options: chartOpts({y:{ticks:{callback:v=>v+'%'}}}, {format:FMT_PCT})
   });
+  charts.margin.$pop = {
+    title:(d,i)=> `${d===0?'План-маржа':'Факт-маржа'} · ${startQuarters[i]}`,
+    rows:(d,i)=> rows.filter(p=>p.period===startQuarters[i] && p[d===0?'marginPlan':'marginFact']!=null),
+    value:(d,i)=> `средняя ${fmtPct((d===0?planByQ:factByQ)[i])}`
+  };
 
   // qualification chart (stacked, 2026+ only)
   const cats = ['Удачный','Рабочий','Рискованный','Нежелательный'];
@@ -1893,6 +2005,10 @@ function renderAnalytics(){
     }))},
     options: chartOpts({x:{stacked:true},y:{stacked:true, ticks:{precision:0}}}, {stacked:true, totals:true, format:FMT_INT})
   });
+  charts.qual.$pop = {
+    title:(d,i)=> `${cats[d]} · ${quarters[i]}`,
+    rows:(d,i)=> qualRows.filter(p=>projQuarters(p).includes(quarters[i]) && effectiveCategory(p)===cats[d])
+  };
 
   renderProductCharts(rows, quarters);
   renderClientRevenue(rows, startQuarters);
@@ -1909,6 +2025,10 @@ function renderAnalytics(){
     }))},
     options: chartOpts({x:{stacked:true},y:{stacked:true, ticks:{precision:0}}}, {stacked:true, totals:true, format:FMT_INT})
   });
+  charts.curator.$pop = {
+    title:(d,i)=> `Куратор ${topCurators[d]} · ${quarters[i]}`,
+    rows:(d,i)=> rows.filter(p=>projQuarters(p).includes(quarters[i]) && (p.curator||'').includes(topCurators[d]))
+  };
 
   renderRunCharts(rows);
 
@@ -1956,6 +2076,11 @@ function drawFieldChart(key, canvasId, subId, rows, o){
         : { x:{ grid:{display:false}, ticks:{font:{size:11.5}} }, y:{ display:false, beginAtZero:true, grace:'5%' } }
     }
   });
+  const fieldTitle = {format:'Формат', location:'Место', participants:'Участников'}[o.field] || o.field;
+  charts[key].$pop = {
+    title:(d,i)=> `${fieldTitle}: ${labels[i]}`,
+    rows:(d,i)=> rows.filter(p=>String(p[o.field]||'').trim()===labels[i])
+  };
 }
 function renderRunCharts(rows){
   drawFieldChart('fmt','chartFormat','fmtSub', rows, {field:'format', order: optionOrder('f_format'), hint:'число проектов и доля'});
@@ -1993,6 +2118,10 @@ function drawProductQuarterPie(rows){
     data:{ labels, datasets:[{ data: labels.map(l=>counts[l]), backgroundColor: labels.map((_,i)=>BRAND_PALETTE[i%BRAND_PALETTE.length]) }] },
     options: pieOpts()
   });
+  charts.productQ.$pop = {
+    title:(d,i)=> `Продукт: ${labels[i]} · ${q}`,
+    rows:(d,i)=> subset.filter(p=>(p.product||'—')===labels[i])
+  };
 }
 function drawProductYearPie(rows){
   const counts = productCounts(rows);
@@ -2003,6 +2132,10 @@ function drawProductYearPie(rows){
     data:{ labels, datasets:[{ data: labels.map(l=>counts[l]), backgroundColor: labels.map((_,i)=>BRAND_PALETTE[i%BRAND_PALETTE.length]) }] },
     options: pieOpts()
   });
+  charts.productY.$pop = {
+    title:(d,i)=> `Продукт: ${labels[i]}`,
+    rows:(d,i)=> rows.filter(p=>(p.product||'—')===labels[i])
+  };
 }
 
 function renderClientRevenue(rows, quarters){
@@ -2019,8 +2152,8 @@ function renderClientRevenue(rows, quarters){
   const qShort = quarters.map(q=>q.split(' ')[0]);
   let html = '<tr><th>Клиент</th>' + qShort.map(q=>`<th>${q}</th>`).join('') + '<th>Итого за год</th></tr>';
   list.forEach(([client, d])=>{
-    html += '<tr><td>'+escapeHtml(client)+'</td>' +
-      quarters.map(q=>`<td class="num">${d.byQ[q]? fmtRub(d.byQ[q]) : '—'}</td>`).join('') +
+    html += `<tr data-pop="${popAttr({k:'client',n:client})}"><td><span class="poptrig" tabindex="0" aria-describedby="projPop">${escapeHtml(client)}</span></td>` +
+      quarters.map(q=> d.byQ[q] ? `<td class="num" data-pop="${popAttr({k:'client',n:client,q})}">${fmtRub(d.byQ[q])}</td>` : '<td class="num">—</td>').join('') +
       `<td class="num" style="font-weight:700;">${fmtRub(d.total)}</td></tr>`;
   });
   document.getElementById('clientRevenueTable').innerHTML = html || '<tr><td class="dim">Нет данных</td></tr>';
@@ -2039,8 +2172,8 @@ function renderLoadTable(tableId, rows, field, includeMargin){
   const header = includeMargin ? `<tr><th>${label}</th><th>Проектов</th><th>Средняя фактмаржа</th></tr>` : `<tr><th>${label}</th><th>Проектов</th></tr>`;
   document.getElementById(tableId).innerHTML = header +
     list.map(([name,s])=> includeMargin
-      ? `<tr><td>${escapeHtml(name)}</td><td class="num">${s.count}</td><td class="num">${s.marginN? fmtPct(s.marginSum/s.marginN) : '—'}</td></tr>`
-      : `<tr><td>${escapeHtml(name)}</td><td class="num">${s.count}</td></tr>`
+      ? `<tr data-pop="${popAttr({k:'pm',n:name})}"><td><span class="poptrig" tabindex="0" aria-describedby="projPop">${escapeHtml(name)}</span></td><td class="num">${s.count}</td><td class="num">${s.marginN? fmtPct(s.marginSum/s.marginN) : '—'}</td></tr>`
+      : `<tr data-pop="${popAttr({k:'fac',n:name})}"><td><span class="poptrig" tabindex="0" aria-describedby="projPop">${escapeHtml(name)}</span></td><td class="num">${s.count}</td></tr>`
     ).join('');
 }
 
@@ -2087,6 +2220,10 @@ function renderYearComparison(){
     data:{ labels: qNums, datasets: years.map((y,i)=>({ label:y, backgroundColor: yearColors[i%yearColors.length], data: qNums.map(q=>countByYQ(y,q)) })) },
     options: chartOpts({y:{ticks:{precision:0}}}, {format:FMT_INT})
   });
+  charts.yearCount.$pop = {
+    title:(d,i)=> `${years[d]} · ${qNums[i]}`,
+    rows:(d,i)=> byYear[years[d]].filter(p=> projQuarters(p).some(x=>x.startsWith(qNums[i])))
+  };
 
   if(charts.yearPrice) charts.yearPrice.destroy();
   charts.yearPrice = new Chart(document.getElementById('chartYearPrice'), {
@@ -2094,6 +2231,11 @@ function renderYearComparison(){
     data:{ labels: years, datasets:[{ label:'Средняя цена проекта', backgroundColor: BRAND_PALETTE.slice(0,years.length), data: years.map(y=> avg(byYear[y].map(p=>p.price).filter(v=>v!=null))) }] },
     options: (()=>{ const o = chartOpts({y:{ticks:{callback:v=>fmtRubShort(v)}}}, {format:fmtRubShort}); o.plugins.legend = {display:false}; return o; })()
   });
+  charts.yearPrice.$pop = {
+    title:(d,i)=> `${years[i]} · средняя цена проекта`,
+    rows:(d,i)=> byYear[years[i]].filter(p=>p.price!=null),
+    value:(d,i,list)=> 'средняя ' + fmtRub(avg(list.map(p=>p.price)))
+  };
 
   if(charts.yearPriceQ) charts.yearPriceQ.destroy();
   charts.yearPriceQ = new Chart(document.getElementById('chartYearPriceQuarter'), {
@@ -2101,6 +2243,11 @@ function renderYearComparison(){
     data:{ labels: qNums, datasets: years.map((y,i)=>({ label:y, backgroundColor: yearColors[i%yearColors.length], data: qNums.map(q=>avgPriceByYQ(y,q)) })) },
     options: chartOpts({y:{ticks:{callback:v=>fmtRubShort(v)}}}, {format:fmtRubShort})
   });
+  charts.yearPriceQ.$pop = {
+    title:(d,i)=> `${years[d]} · ${qNums[i]} · средняя цена`,
+    rows:(d,i)=> byYear[years[d]].filter(p=>(p.period||'').startsWith(qNums[i]) && p.price!=null),
+    value:(d,i,list)=> 'средняя ' + fmtRub(avg(list.map(p=>p.price)))
+  };
 }
 
 
