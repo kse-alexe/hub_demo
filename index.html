@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#EDEDEF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17171E" media="(prefers-color-scheme: dark)">
 <title>PMO Analytics Hub — демо</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -280,14 +282,28 @@ button,.btn,.qchip,.qtab,.nav-btn{touch-action:manipulation;}
 .poptrig:focus-visible{outline:2px solid var(--accent, #5B5BD6);outline-offset:2px;border-radius:3px;}
 tr[data-pop]:hover td{background:rgba(120,120,140,.08);}
 td[data-pop]{cursor:help;}
+
+/* ревью по Web Interface Guidelines */
+.skip-link{position:absolute;left:12px;top:-60px;z-index:400;background:var(--panel);color:var(--ink);padding:10px 14px;border-radius:8px;border:2px solid var(--accent);font-size:13px;font-weight:600;text-decoration:none;}
+.skip-link:focus{top:12px;}
+.main:focus{outline:none;}
+.num,.stat .v,.pcard-price,.mono{font-variant-numeric:tabular-nums;}
+h1,h2,h3{text-wrap:balance;}
+html{-webkit-tap-highlight-color:rgba(59,91,219,.16);}
+select,select option{background-color:var(--panel);color:var(--ink);}
+.filters select,.field select,.scorerow select{background-color:var(--bg);}
+.scorerow select{background-color:var(--panel);}
+.sidebar-inner{height:100vh;height:100dvh;}
+a,select,input,.pcard-open,.row-open{touch-action:manipulation;}
 </style>
 </head>
 <body>
 <div class="app">
 
+  <a class="skip-link" href="#main">Перейти к содержимому</a>
   <aside class="sidebar">
         <div class="sidebar-inner">
-        <div class="brand">
+        <div class="brand" translate="no">
       <div class="brand-mark"><svg class="brand-logo" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="12" fill="#3B5BDB"/><path d="M7 16.5V12M12 16.5V7.5M17 16.5v-6" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg> <span class="display">PMO Analytics Hub</span></div>
       <div class="brand-sub">Реестр проектов + квалификация · демо</div>
           </div>
@@ -300,7 +316,7 @@ td[data-pop]{cursor:help;}
     </div>
   </aside>
 
-  <main class="main">
+  <main class="main" id="main" tabindex="-1">
     <div class="demo-banner" role="note"><strong>Демо-версия.</strong> Все данные вымышлены, суммы иллюстративные, клиенты заменены отраслями. Изменения сохраняются только в этом браузере.</div>
 
     <!-- PROJECTS 2026 -->
@@ -317,7 +333,7 @@ td[data-pop]{cursor:help;}
       </div>
 
       <div class="filters">
-        <input type="text" id="a_search" aria-label="Поиск по проектам" placeholder="Поиск: проект, клиент, проджект…">
+        <input type="text" id="a_search" aria-label="Поиск по проектам" placeholder="Поиск: проект, клиент, проджект…" autocomplete="off" name="a_search">
         <div class="qtabs" id="a_qtabs"></div>
         <select id="a_client" aria-label="Клиент"><option value="">Клиент: все</option></select>
         <select id="a_product" aria-label="Продукт"><option value="">Продукт: все</option></select>
@@ -342,7 +358,7 @@ td[data-pop]{cursor:help;}
       </div>
 
       <div class="filters">
-        <input type="text" id="b_search" aria-label="Поиск по проектам" placeholder="Поиск: проект, клиент, проджект…">
+        <input type="text" id="b_search" aria-label="Поиск по проектам" placeholder="Поиск: проект, клиент, проджект…" autocomplete="off" name="b_search">
         <div class="qtabs" id="b_qtabs"></div>
         <select id="b_client" aria-label="Клиент"><option value="">Клиент: все</option></select>
         <select id="b_product" aria-label="Продукт"><option value="">Продукт: все</option></select>
@@ -485,11 +501,11 @@ td[data-pop]{cursor:help;}
       <div class="fgrid">
         <div class="field span2">
           <label for="f_name">Название проекта*</label>
-          <input type="text" id="f_name" placeholder="Клиент // краткое описание // номер">
+          <input type="text" id="f_name" placeholder="Клиент // краткое описание // номер…" autocomplete="off" name="f_name">
         </div>
         <div class="field">
           <label for="f_id">ID проекта*</label>
-          <input type="text" id="f_id" class="mono" placeholder="напр. PRJ-26-001">
+          <input type="text" id="f_id" class="mono" placeholder="напр. PRJ-26-001…" autocomplete="off" name="f_id" spellcheck="false">
         </div>
         <div class="field">
           <label for="f_year">Год</label>
@@ -497,12 +513,12 @@ td[data-pop]{cursor:help;}
         </div>
         <div class="field">
           <label for="f_client">Клиент</label>
-          <input type="text" id="f_client" list="clientList" placeholder="начни вводить — подскажем">
+          <input type="text" id="f_client" list="clientList" placeholder="начни вводить — подскажем…" autocomplete="off" name="f_client">
         </div>
         <div class="field">
           <label for="f_product">Продукт</label>
           <select id="f_product"></select>
-          <input type="text" id="f_product_other" aria-label="Новый продукт" placeholder="Впиши новый продукт" style="display:none;margin-top:6px;">
+          <input type="text" id="f_product_other" aria-label="Новый продукт" placeholder="Впиши новый продукт…" style="display:none;margin-top:6px;" autocomplete="off" name="f_product_other">
         </div>
         <div class="field">
           <label id="f_pm_box_lbl">Проджект <span class="hint">можно несколько</span></label>
@@ -537,23 +553,23 @@ td[data-pop]{cursor:help;}
         <div class="field span2">
           <label for="f_location">Место проведения</label>
           <select id="f_location"></select>
-          <input type="text" id="f_location_other" aria-label="Новое место проведения" placeholder="Впиши новое место проведения" style="display:none;margin-top:6px;">
+          <input type="text" id="f_location_other" aria-label="Новое место проведения" placeholder="Впиши новое место проведения…" style="display:none;margin-top:6px;" autocomplete="off" name="f_location_other">
         </div>
         <div class="field">
           <label for="f_ticket">Тикет (ссылка) <a class="fieldlink" id="f_ticket_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
-          <input type="text" id="f_ticket" placeholder="https://tracker.example.com/…">
+          <input type="text" id="f_ticket" placeholder="https://tracker.example.com/…" autocomplete="off" name="f_ticket" spellcheck="false">
         </div>
         <div class="field">
           <label for="f_budgetFile">Смета (файл) <a class="fieldlink" id="f_budgetFile_link" target="_blank" rel="noopener" style="display:none">Открыть ↗</a></label>
-          <input type="text" id="f_budgetFile">
+          <input type="text" id="f_budgetFile" autocomplete="off" name="f_budgetFile">
         </div>
         <div class="field">
           <label for="f_price">Цена проекта, ₽</label>
-          <input type="text" id="f_price" class="mono">
+          <input type="text" id="f_price" class="mono" autocomplete="off" name="f_price">
         </div>
         <div class="field">
           <label for="f_marginPlan">План маржа, %</label>
-          <input type="text" id="f_marginPlan" class="mono">
+          <input type="text" id="f_marginPlan" class="mono" autocomplete="off" name="f_marginPlan">
         </div>
         <div class="field">
           <label id="f_period_box_lbl">Период проведения <span class="hint">можно несколько кварталов</span></label>
@@ -569,7 +585,7 @@ td[data-pop]{cursor:help;}
         </div>
         <div class="field">
           <label for="f_marginFact">Фактмаржа, %</label>
-          <input type="text" id="f_marginFact" class="mono">
+          <input type="text" id="f_marginFact" class="mono" autocomplete="off" name="f_marginFact">
         </div>
       </div>
       <div class="warn" id="idWarn" style="display:none;"></div>
@@ -585,11 +601,11 @@ td[data-pop]{cursor:help;}
           <div class="fgrid">
             <div class="field span2">
               <label for="q_artifactFormat">Формат артефакта</label>
-              <input type="text" id="q_artifactFormat" placeholder="Методичка, презентация, карточки…">
+              <input type="text" id="q_artifactFormat" placeholder="Методичка, презентация, карточки…" autocomplete="off" name="q_artifactFormat">
             </div>
             <div class="field">
               <label for="q_ppmLink">Ссылка на заметки ППМ</label>
-              <input type="text" id="q_ppmLink">
+              <input type="text" id="q_ppmLink" autocomplete="off" name="q_ppmLink">
             </div>
           </div>
 
@@ -705,7 +721,7 @@ td[data-pop]{cursor:help;}
         <div id="qualLegacy" style="display:none;">
           <p class="hint" style="margin:0 0 12px;">В 2025 году считали только удовлетворённость клиента — единого балла и категории тогда не было.</p>
           <div class="scoreblock">
-            <div class="scorerow"><span>Удовлетворённость, %</span><input type="text" id="lg_satisfaction" aria-label="Удовлетворённость, %" class="mono" style="width:100%;" placeholder="0–100"></div>
+            <div class="scorerow"><span>Удовлетворённость, %</span><input type="text" id="lg_satisfaction" aria-label="Удовлетворённость, %" class="mono" style="width:100%;" placeholder="0–100…" autocomplete="off" name="lg_satisfaction"></div>
           </div>
         </div>
 
@@ -737,8 +753,8 @@ td[data-pop]{cursor:help;}
       <div id="cfList"></div>
       <div class="section-title">Добавить поле</div>
       <div class="cf-add">
-        <input type="text" id="cf_label" aria-label="Название поля" placeholder="Название (напр. Клиент)">
-        <input type="text" id="cf_key" aria-label="Техническое имя поля" placeholder="Описание — техническое имя поля (напр. client)">
+        <input type="text" id="cf_label" aria-label="Название поля" placeholder="Название (напр. Клиент)…" autocomplete="off" name="cf_label">
+        <input type="text" id="cf_key" aria-label="Техническое имя поля" placeholder="Описание — техническое имя поля (напр. client)…" autocomplete="off" name="cf_key" spellcheck="false">
         <button class="btn btn-primary" id="cf_addBtn" type="button"><span aria-hidden="true">＋</span> Добавить</button>
       </div>
       <p class="cf-hint">Имя поля — это как оно называется в карточке проекта (price, client, product, pm, account, curator, facilitators, format, participants, location, marginPlan, marginFact, period, periodClose, closed, ticket, budgetFile, category).</p>
