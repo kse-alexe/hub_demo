@@ -121,8 +121,8 @@ tbody tr:hover{background:var(--accent-soft);}
 .pcard.st-work{border-left-color:var(--work);background:var(--work-soft);}
 .pcard.st-closed{border-left-color:var(--ink-soft);background:var(--bg);}
 .pcard-name{font-weight:600;font-size:14px;margin-bottom:6px;line-height:1.35;}
-.pcard-price{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;color:var(--accent);margin-bottom:10px;}
-.pcard-pricebar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.pcard-price{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;color:var(--accent);margin-bottom:10px;white-space:nowrap;}
+.pcard-pricebar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 8px;margin-bottom:10px;}
 .pcard-pricebar .pcard-price{margin-bottom:0;}
 .pcard .tag{font-size:11px;padding:2px 8px;}
 .pcard-row{display:flex;justify-content:space-between;font-size:12.5px;gap:8px;margin-bottom:5px;}
@@ -910,7 +910,7 @@ function fmtPct(n){
 }
 function fmtRub(n){
   if(n===null || n===undefined) return '—';
-  return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+  return Math.round(n).toLocaleString('ru-RU') + '\u00A0₽';
 }
 function fmtRubShort(n){
   if(n===null || n===undefined) return '—';
